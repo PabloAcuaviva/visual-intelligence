@@ -17,12 +17,12 @@ class MazeGenerator:
         self.end = None
         self.solution_path = None
 
-        # Color mapping for ARC format
-        self.WALL_COLOR = 0  # Black
-        self.PATH_COLOR = 1  # Blue
-        self.START_COLOR = 3  # Green
-        self.END_COLOR = 2  # Red
-        self.SOLUTION_COLOR = 4  # Yellow
+        # Ids grid
+        self.WALL = 0
+        self.PATH = 1
+        self.START = 3
+        self.END = 2
+        self.SOLUTION = 4
 
     def wilson_algorithm(self) -> np.ndarray:
         """Generate a maze using Wilson's loop-erased random walk algorithm."""
@@ -34,7 +34,7 @@ class MazeGenerator:
 
         # Add a random cell to start
         start_x, start_y = random.randrange(self.width), random.randrange(self.height)
-        maze[2 * start_y + 1, 2 * start_x + 1] = self.PATH_COLOR
+        maze[2 * start_y + 1, 2 * start_x + 1] = self.PATH
         in_maze.add((start_x, start_y))
 
         # Get all cells not yet in maze
@@ -72,7 +72,7 @@ class MazeGenerator:
             # Add the path to the maze
             for i in range(len(path)):
                 x, y = path[i]
-                maze[2 * y + 1, 2 * x + 1] = self.PATH_COLOR
+                maze[2 * y + 1, 2 * x + 1] = self.PATH
                 in_maze.add((x, y))
 
                 # Connect to next cell in path
@@ -80,7 +80,7 @@ class MazeGenerator:
                     next_x, next_y = path[i + 1]
                     wall_x = x + next_x + 1
                     wall_y = y + next_y + 1
-                    maze[wall_y, wall_x] = self.PATH_COLOR
+                    maze[wall_y, wall_x] = self.PATH
 
             # Update remaining cells
             remaining_cells = [
@@ -97,7 +97,7 @@ class MazeGenerator:
         path_cells = []
         for y in range(1, maze.shape[0], 2):
             for x in range(1, maze.shape[1], 2):
-                if maze[y, x] == self.PATH_COLOR:
+                if maze[y, x] == self.PATH:
                     path_cells.append((x, y))
         return path_cells
 
@@ -172,8 +172,8 @@ class MazeGenerator:
             )
 
         # Mark start and end in maze
-        maze[self.start[1], self.start[0]] = self.START_COLOR
-        maze[self.end[1], self.end[0]] = self.END_COLOR
+        maze[self.start[1], self.start[0]] = self.START
+        maze[self.end[1], self.end[0]] = self.END
 
     def find_shortest_path(self, maze: np.ndarray) -> List[Tuple[int, int]]:
         """Find shortest path from start to end using BFS."""
@@ -197,7 +197,7 @@ class MazeGenerator:
                     0 <= nx < maze.shape[1]
                     and 0 <= ny < maze.shape[0]
                     and (nx, ny) not in visited
-                    and maze[ny, nx] != self.WALL_COLOR
+                    and maze[ny, nx] != self.WALL
                 ):
                     visited.add((nx, ny))
                     queue.append(((nx, ny), path + [(nx, ny)]))
@@ -248,8 +248,8 @@ class MazeGenerator:
         # Mark solution path if requested
         if show_solution and self.solution_path:
             for x, y in self.solution_path:
-                if viz_maze[y, x] not in [self.START_COLOR, self.END_COLOR]:
-                    viz_maze[y, x] = self.SOLUTION_COLOR
+                if viz_maze[y, x] not in [self.START, self.END]:
+                    viz_maze[y, x] = self.SOLUTION
 
         # Draw maze
         for y in range(viz_maze.shape[0]):
@@ -281,8 +281,8 @@ class MazeGenerator:
         output_maze = self.maze.copy()
         if self.solution_path:
             for x, y in self.solution_path:
-                if output_maze[y, x] not in [self.START_COLOR, self.END_COLOR]:
-                    output_maze[y, x] = self.SOLUTION_COLOR
+                if output_maze[y, x] not in [self.START, self.END]:
+                    output_maze[y, x] = self.SOLUTION
 
         return {"input": input_maze.tolist(), "output": output_maze.tolist()}
 
@@ -443,5 +443,5 @@ if __name__ == "__main__":
         end_pos=end_pos,
     )
 
-    with open("maze_dataset.json", "w") as f:
+    with open("debug_output/maze_dataset.json", "w") as f:
         json.dump(dataset, f, indent=2)
