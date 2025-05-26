@@ -27,21 +27,28 @@ class MazeGenerator:
     def wilson_algorithm(self) -> np.ndarray:
         """Generate a maze using Wilson's loop-erased random walk algorithm."""
         # Initialize grid - all walls initially
-        maze = np.zeros((2 * self.height + 1, 2 * self.width + 1), dtype=int)
+        # Create exact grid size as specified by user
+        maze = np.zeros((self.height, self.width), dtype=int)
+
+        # Calculate logical maze dimensions (every other cell is a maze cell)
+        logical_height = (self.height - 1) // 2
+        logical_width = (self.width - 1) // 2
 
         # Set of cells that are part of the maze
         in_maze = set()
 
         # Add a random cell to start
-        start_x, start_y = random.randrange(self.width), random.randrange(self.height)
+        start_x, start_y = random.randrange(logical_width), random.randrange(
+            logical_height
+        )
         maze[2 * start_y + 1, 2 * start_x + 1] = self.PATH
         in_maze.add((start_x, start_y))
 
         # Get all cells not yet in maze
         remaining_cells = [
             (x, y)
-            for x in range(self.width)
-            for y in range(self.height)
+            for x in range(logical_width)
+            for y in range(logical_height)
             if (x, y) not in in_maze
         ]
 
@@ -59,7 +66,7 @@ class MazeGenerator:
                 next_x, next_y = current[0] + dx, current[1] + dy
 
                 # Keep within bounds
-                if 0 <= next_x < self.width and 0 <= next_y < self.height:
+                if 0 <= next_x < logical_width and 0 <= next_y < logical_height:
                     current = (next_x, next_y)
 
                     # If we've been here before in this walk, erase the loop
@@ -85,8 +92,8 @@ class MazeGenerator:
             # Update remaining cells
             remaining_cells = [
                 (x, y)
-                for x in range(self.width)
-                for y in range(self.height)
+                for x in range(logical_width)
+                for y in range(logical_height)
                 if (x, y) not in in_maze
             ]
 
@@ -429,14 +436,12 @@ class MazeDatasetGenerator:
 
 
 if __name__ == "__main__":
-    start_pos = [(1, 1), (1, 11)]
-    end_pos = [(11, 1), (11, 11)]
-    start_pos = None
-    end_pos = None
-    dataset_generator = MazeDatasetGenerator(width=6, height=6)
+    start_pos = [(1, 1)]  # , (1, 11)]
+    end_pos = [(19, 19)]  # (11, 1),
+    dataset_generator = MazeDatasetGenerator(width=21, height=21)
     dataset = dataset_generator.generate_dataset(
-        n_train=3,
-        n_test=2,
+        n_train=1000,
+        n_test=50,
         distance_threshold=0.5,
         visualize_samples=False,
         start_pos=start_pos,
