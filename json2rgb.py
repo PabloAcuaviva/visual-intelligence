@@ -348,6 +348,7 @@ def process_single_json_file(
     fixed_cell_size: int = None,
     max_cell_size: int = 50,
     grid_border: int = 2,
+    base_grid_style: GridStyle = ArcBaseStyle,
 ):
     """
     Process a single JSON file and create visualization folder with images and metadata.
@@ -381,7 +382,7 @@ def process_single_json_file(
         cell_size = fixed_cell_size
 
     # Set up grid style
-    grid_style = deepcopy(MazeBaseStyle)
+    grid_style = deepcopy(base_grid_style)
     grid_style.cell_size = cell_size
     grid_style.grid_border = grid_border
 
@@ -607,4 +608,5 @@ if __name__ == "__main__":
         fixed_cell_size=16,
         max_cell_size=500,
         grid_border=0,
+        base_grid_style=MazeBaseStyle,
     )

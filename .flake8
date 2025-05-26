@@ -3,8 +3,9 @@ max-line-length = 88
 # Ignore E731: Allow the use of lambda functions
 #        E203: E203 whitespace before ':'
 #        E501: Enforce line length of 88, this is weakly enforced by black (but not fully)
-
-extend-ignore = E731,E203,E501
+#        E231: Allow whitespace after ',' in function call
+extend-ignore = E731,E203,E501,E231
 # Ignore 401: Allow unused imports in __init__.py files
 #        403: ... '*' used; unable to detect undefined names
+#        E231 missing whitespace after ':'
 per-file-ignores = __init__.py:F401,F403
