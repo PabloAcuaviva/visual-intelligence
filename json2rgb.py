@@ -601,7 +601,7 @@ if __name__ == "__main__":
     # main()
 
     process_single_json_file(
-        json_path=Path("tasks/debug_output/maze_dataset.json"),
+        json_path=Path("tasks/json_output/maze_dataset.json"),
         output_folder=Path("datasets/test"),
         H=21 * 16,
         W=21 * 16,
