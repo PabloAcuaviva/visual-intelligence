@@ -1,0 +1,19 @@
+# Project metadata
+[project]
+name = "visual-logic"
+version = "0.1.0"
+description = "Generator, encoder and decoder for visual logic task in a grid-like environment."
+authors = [{name = "Pablo H.Acuaviva", email = "pablohacuaviva@gmail.com"}]
+dependencies = []
+
+# Build system
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 88
+
+[tool.isort]
+profile = "black"
+line_length = 88

@@ -1,0 +1,25 @@
+repos:
+# General
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.3.0
+    hooks:
+    -   id: check-yaml
+        exclude: 'mkdocs\.yml'
+    -   id: end-of-file-fixer
+    -   id: trailing-whitespace
+# isort
+-   repo: https://github.com/PyCQA/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+# Black
+-   repo: https://github.com/psf/black
+    rev: 23.1.0  # or the latest version
+    hooks:
+      - id: black
+# Flake 8
+- repo: https://github.com/PyCQA/flake8
+  rev: 6.0.0
+  hooks:
+    - id: flake8
+      args: ["--config=.flake8"]
