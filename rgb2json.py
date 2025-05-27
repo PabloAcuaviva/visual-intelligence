@@ -20,8 +20,8 @@ def format_grid(grid):
 
 
 if __name__ == "__main__":
-    root_path = Path("datasets/mazes")
-    nested_levels = 0
+    root_path = Path("datasets/arc-explore")
+    nested_levels = 1
 
     # Get dataset paths
     data_paths = [root_path]

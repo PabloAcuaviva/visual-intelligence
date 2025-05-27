@@ -600,13 +600,24 @@ def main():
 if __name__ == "__main__":
     # main()
 
+    # process_single_json_file(
+    #     json_path=Path("tasks/json_output/maze_dataset.json"),
+    #     output_folder=Path("datasets/test"),
+    #     H=21 * 16,
+    #     W=21 * 16,
+    #     fixed_cell_size=16,
+    #     max_cell_size=500,
+    #     grid_border=0,
+    #     base_grid_style=MazeBaseStyle,
+    # )
+
     process_single_json_file(
-        json_path=Path("tasks/json_output/maze_dataset.json"),
-        output_folder=Path("datasets/test"),
-        H=21 * 16,
-        W=21 * 16,
-        fixed_cell_size=16,
+        json_path=Path("tasks/json/arc-explore/connect.json"),
+        output_folder=Path("datasets/arc-explore/connect"),
+        H=320,
+        W=320,
+        fixed_cell_size=None,
         max_cell_size=500,
-        grid_border=0,
-        base_grid_style=MazeBaseStyle,
+        grid_border=2,
+        base_grid_style=ArcBaseStyle,
     )
