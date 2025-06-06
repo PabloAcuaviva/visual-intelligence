@@ -335,7 +335,9 @@ def calculate_cell_size(
     cell_size = min(h_cell_width, h_cell_height, max_cell_size)
 
     if cell_size < min(H, W) // 96:
-        raise ValueError("Cell is too small for the image resolution")
+        raise ValueError(
+            f"Cell is too small for the image resolution: {cell_size=}. Number of cells: {max_rows=} & {max_cols}."
+        )
 
     return cell_size
 
@@ -377,7 +379,11 @@ def process_single_json_file(
 
     # Determine cell size
     if fixed_cell_size is None:
-        cell_size = calculate_cell_size(data, H, W, max_cell_size, grid_border)
+        try:
+            cell_size = calculate_cell_size(data, H, W, max_cell_size, grid_border)
+        except ValueError as e:
+            print(e)
+            return  # If cell_size calculation fails, grid is too big for the image, for now drop it (or raise an error)
     else:
         cell_size = fixed_cell_size
 
@@ -598,7 +604,7 @@ def main():
 
 
 if __name__ == "__main__":
-    # main()
+    main()
 
     # process_single_json_file(
     #     json_path=Path("tasks/json_output/maze_dataset.json"),
