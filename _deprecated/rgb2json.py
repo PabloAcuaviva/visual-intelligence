@@ -3,9 +3,8 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-from tqdm import tqdm
-
 from json2rgb import GridMetadata, recover_grid
+from tqdm import tqdm
 
 
 def _imread(filename):

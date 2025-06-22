@@ -2,32 +2,31 @@ from typing import Literal
 
 import numpy as np
 from PIL import Image
-from pydantic import BaseModel
 
-from .styles import RenderStyle
+from tasks.base import TaskProblem
+from tasks.render.schemas import RenderMetadata, RenderStyle
 
 Grid = list[list[int]]
 
 
 ###
-# Schemas
-###
-class RenderMetadata(BaseModel):
-    grid_height: int
-    grid_width: int
-    ###
-    image_height: int
-    image_width: int
-
-    grid_height_image: int
-    grid_width_image: int
-    grid_start_x_image: int
-    grid_start_y_image: int
-
-
-###
 # Functions
 ###
+def get_auto_image_dim(
+    task_problem: TaskProblem, render_style: RenderStyle
+) -> tuple[int, int]:
+    grids_to_check = [task_problem.init_grid, task_problem.tgt_grid]
+    if task_problem.intermediate_grids is not None:
+        grids_to_check += task_problem.intermediate_grids
+
+    height, width = 0, 0
+    for grid in grids_to_check:
+        render_metadata: RenderMetadata = get_render_metadata(grid, render_style)
+        height = max(render_metadata.image_height, height)
+        width = max(render_metadata.image_width, width)
+    return height, width
+
+
 def get_render_metadata(
     grid: Grid,
     render_style: RenderStyle,

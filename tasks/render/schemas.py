@@ -1,6 +1,22 @@
 from pydantic import BaseModel
 
 
+###
+# Schemas
+###
+class RenderMetadata(BaseModel):
+    grid_height: int
+    grid_width: int
+    ###
+    image_height: int
+    image_width: int
+
+    grid_height_image: int
+    grid_width_image: int
+    grid_start_x_image: int
+    grid_start_y_image: int
+
+
 class RenderStyle(BaseModel):
     cell_size: int
     grid_border_size: int
