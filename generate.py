@@ -35,10 +35,11 @@ if __name__ == "__main__":
             dist_fn=path_distance,
         ).generate(n_train=1000, n_test=20, distance_threshold=0.5)
 
-        shutil.rmtree("datasets/test_set", ignore_errors=True)
-        TaskProblemSet(task_problems=test_dataset).save(
-            "datasets/test_set", MazeBaseStyle
+        shutil.rmtree("datasets/maze", ignore_errors=True)
+        TaskProblemSet(task_problems=train_dataset).save(
+            "datasets/train", MazeBaseStyle
         )
+        TaskProblemSet(task_problems=test_dataset).save("datasets/test", MazeBaseStyle)
 
     def generate_gol_dataset():
         def gol_hamming_distance(tp0: TaskProblem, tp1: TaskProblem) -> float:
@@ -60,10 +61,9 @@ if __name__ == "__main__":
             dist_fn=gol_hamming_distance,
         ).generate(n_train=100, n_test=10, distance_threshold=0.3)
 
-        shutil.rmtree("datasets/test_set_gol", ignore_errors=True)
-        TaskProblemSet(task_problems=gol_test).save(
-            "datasets/test_set_gol", ArcBaseStyle
-        )
+        shutil.rmtree("datasets/gol", ignore_errors=True)
+        TaskProblemSet(task_problems=gol_train).save("datasets/gol/train", ArcBaseStyle)
+        TaskProblemSet(task_problems=gol_test).save("datasets/gol/test", ArcBaseStyle)
 
     def generate_langton_ant_dataset():
         def ant_hamming_distance(tp0: TaskProblem, tp1: TaskProblem) -> float:
@@ -84,12 +84,17 @@ if __name__ == "__main__":
             dist_fn=ant_hamming_distance,
         ).generate(n_train=100, n_test=10, distance_threshold=0.3)
 
-        shutil.rmtree("datasets/test_set_ant", ignore_errors=True)
+        shutil.rmtree("datasets/langton_ant", ignore_errors=True)
+        TaskProblemSet(task_problems=ant_train).save(
+            "datasets/langton_ant/train", ArcBaseStyle
+        )
         TaskProblemSet(task_problems=ant_test).save(
-            "datasets/test_set_ant", ArcBaseStyle
+            "datasets/langton_ant/test", ArcBaseStyle
         )
 
-    # Run all dataset generations
-    # generate_maze_dataset()
-    # generate_gol_dataset()
+    ###
+    # Datasets generation for different tasks
+    ###
+    generate_maze_dataset()
+    generate_gol_dataset()
     generate_langton_ant_dataset()
