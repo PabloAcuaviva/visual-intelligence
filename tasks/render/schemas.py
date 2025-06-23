@@ -55,6 +55,7 @@ ArcBaseStyle = RenderStyle(
     border_color=(85, 85, 85),  # Medium gray border
 )
 
+
 MazeBaseStyle = RenderStyle(
     cell_size=16,
     grid_border_size=0,

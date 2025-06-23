@@ -34,6 +34,9 @@ def _array_to_grid(v: Any) -> Grid:
     return v
 
 
+###
+# Base clases
+###
 class TaskProblem(BaseModel):
     init_grid: Grid
     tgt_grid: Grid
