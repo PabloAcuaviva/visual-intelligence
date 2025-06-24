@@ -2,7 +2,6 @@ from typing import Literal
 
 import numpy as np
 from PIL import Image
-
 from tasks.base import TaskProblem
 from tasks.render.schemas import RenderMetadata, RenderStyle
 

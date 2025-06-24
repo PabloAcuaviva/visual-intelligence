@@ -3,7 +3,6 @@ from collections import deque
 from typing import Dict, List, Tuple, TypedDict
 
 import numpy as np
-
 from tasks.base import Task, TaskProblem
 
 
