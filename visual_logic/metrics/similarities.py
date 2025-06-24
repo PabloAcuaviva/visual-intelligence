@@ -2,7 +2,7 @@ from typing import Optional
 
 import numpy as np
 
-from tasks.typing_and_extensions import Grid
+from visual_logic.typing_and_extensions import Grid
 
 
 def cells_simmilarity(
