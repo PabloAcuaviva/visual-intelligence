@@ -5,11 +5,12 @@ from tempfile import TemporaryDirectory
 from typing import Any, TypedDict
 from zipfile import ZipFile
 
-from tasks.base import TaskProblem
-from tasks.problem_set import TaskProblemSet
-from tasks.render.schemas import RenderStyle
-from tasks.typing_and_extensions import Grid
 from tqdm import tqdm
+
+from visual_logic.tasks.base import TaskProblem
+from visual_logic.tasks.problem_set import TaskProblemSet
+from visual_logic.tasks.render.schemas import RenderStyle
+from visual_logic.tasks.typing_and_extensions import Grid
 
 
 def accept_path_or_zip(func):

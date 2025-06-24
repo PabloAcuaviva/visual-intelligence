@@ -8,9 +8,10 @@ from typing import Any, Callable, Optional, Type, TypeVar
 import numpy as np
 from PIL import Image
 from pydantic import BaseModel, field_validator
-from tasks.render.schemas import RenderMetadata, RenderStyle
-from tasks.typing_and_extensions import Grid, Video
 from tqdm import tqdm
+
+from visual_logic.tasks.render.schemas import RenderMetadata, RenderStyle
+from visual_logic.tasks.typing_and_extensions import Grid, Video
 
 ###
 # TYPING AND EXT

@@ -2,10 +2,11 @@ from pathlib import Path
 from typing import Literal
 
 from diffusers.utils.export_utils import export_to_video
-from tasks.base import RenderedTaskProblem, TaskProblem
-from tasks.render.render import get_auto_image_dim, render
-from tasks.render.schemas import RenderStyle
-from tasks.typing_and_extensions import (
+
+from visual_logic.tasks.base import RenderedTaskProblem, TaskProblem
+from visual_logic.tasks.render.render import get_auto_image_dim, render
+from visual_logic.tasks.render.schemas import RenderStyle
+from visual_logic.tasks.typing_and_extensions import (
     IMAGE_EXTENSION,
     PROBLEM_EXTENSION,
     VIDEO_EXTENSION,

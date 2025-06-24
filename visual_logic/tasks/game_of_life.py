@@ -4,7 +4,8 @@ from pathlib import Path
 from typing import List, Optional, TypedDict
 
 import numpy as np
-from tasks.base import Task, TaskProblem
+
+from visual_logic.tasks.base import Task, TaskProblem
 
 # Cell states
 DEAD_STATE = 0

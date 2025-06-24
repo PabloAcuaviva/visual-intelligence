@@ -3,7 +3,8 @@ from collections import deque
 from typing import Dict, List, Tuple, TypedDict
 
 import numpy as np
-from tasks.base import Task, TaskProblem
+
+from visual_logic.tasks.base import Task, TaskProblem
 
 
 class MazeSpecificMetadata(TypedDict):

@@ -2,7 +2,8 @@ import random
 from typing import List, Optional, Tuple, TypedDict
 
 import numpy as np
-from tasks.base import Task, TaskProblem
+
+from visual_logic.tasks.base import Task, TaskProblem
 
 # Cell states
 WHITE = 0
