@@ -37,9 +37,11 @@ if __name__ == "__main__":
 
         shutil.rmtree("datasets/maze", ignore_errors=True)
         TaskProblemSet(task_problems=train_dataset).save(
-            "datasets/train", MazeBaseStyle
+            "datasets/maze/train", MazeBaseStyle
         )
-        TaskProblemSet(task_problems=test_dataset).save("datasets/test", MazeBaseStyle)
+        TaskProblemSet(task_problems=test_dataset).save(
+            "datasets/maze/test", MazeBaseStyle
+        )
 
     def generate_gol_dataset():
         def gol_hamming_distance(tp0: TaskProblem, tp1: TaskProblem) -> float:
