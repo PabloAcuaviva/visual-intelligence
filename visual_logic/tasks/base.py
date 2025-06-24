@@ -11,7 +11,7 @@ from pydantic import BaseModel, field_validator
 from tqdm import tqdm
 
 from visual_logic.tasks.render.schemas import RenderMetadata, RenderStyle
-from visual_logic.tasks.typing_and_extensions import Grid, Video
+from visual_logic.typing_and_extensions import Grid, Video
 
 ###
 # TYPING AND EXT
