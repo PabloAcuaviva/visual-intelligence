@@ -26,18 +26,19 @@ def parse_cells_from_content(content: str) -> np.ndarray:
     return np.array(grid, dtype=int)
 
 
-with zipfile.ZipFile(_zip_path, "r") as zip_ref:
-    for file_info in zip_ref.infolist():
-        if not file_info.filename.endswith(".cells"):
-            continue
-        try:
-            with zip_ref.open(file_info) as file:
-                pattern_name = file_info.filename.split(".")[0]
-                content = file.read().decode("utf-8")
-                grid = parse_cells_from_content(content)
-                _initial_patterns[pattern_name] = grid
-        except Exception:
-            pass
+def _load_initial_patterns():
+    with zipfile.ZipFile(_zip_path, "r") as zip_ref:
+        for file_info in zip_ref.infolist():
+            if not file_info.filename.endswith(".cells"):
+                continue
+            try:
+                with zip_ref.open(file_info) as file:
+                    pattern_name = file_info.filename.split(".")[0]
+                    content = file.read().decode("utf-8")
+                    grid = parse_cells_from_content(content)
+                    _initial_patterns[pattern_name] = grid
+            except Exception:
+                pass
 
 
 def expand_grid_size(grid: np.ndarray, H: int, W: int) -> np.ndarray:
@@ -124,6 +125,8 @@ class GameOfLife(Task):
                 p=[1 - self.density, self.density],
             )
         elif self.initialization == "pattern":
+            if not _initial_patterns:
+                _load_initial_patterns()  # So that we don't need to load all the patterns whenever library is imported. Only when used
             valid_patterns = {
                 name: grid
                 for name, grid in _initial_patterns.items()

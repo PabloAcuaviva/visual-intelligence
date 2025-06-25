@@ -1,3 +1,5 @@
+import json
+from collections import defaultdict
 from pathlib import Path
 from typing import Literal
 
@@ -14,15 +16,25 @@ from visual_logic.typing_and_extensions import (
 
 
 class TaskProblemSet:
-    problems_dir_name: str = "problem"
-    init_grid_dir_name: str = "init_image"
-    tgt_grid_dir_name: str = "tgt_image"
-    transition_grids_dir_name: str = "video"
+    problems_dir_name: Path = Path("problem")
+    init_grid_dir_name: Path = Path("init_image")
+    tgt_grid_dir_name: Path = Path("tgt_image")
+    intermediate_grids_dir_name: Path = Path("video")
 
     def __init__(
         self,
         task_problems: list[TaskProblem],
     ):
+        tasks_with_intermediate_grids = sum(
+            [
+                task_problem.intermediate_grids is not None
+                for task_problem in task_problems
+            ]
+        )
+        if tasks_with_intermediate_grids not in {0, len(task_problems)}:
+            raise ValueError(
+                f"Either all tasks include intermediate grids or none of them does for {type(self).__name__}"
+            )
         self.task_problems = task_problems
 
     def save(
@@ -31,6 +43,7 @@ class TaskProblemSet:
         render_style: RenderStyle,
         image_height: Literal["auto", "auto-per-problem"] | int = "auto",
         image_width: Literal["auto", "auto-per-problem"] | int = "auto",
+        subset_sizes: list[int] = None,
     ) -> None:
         ###
         # Generetate dir structure
@@ -47,7 +60,7 @@ class TaskProblemSet:
         tgt_grid_dir = path_dir / self.tgt_grid_dir_name
         tgt_grid_dir.mkdir()
 
-        intermediate_grids_dir = path_dir / self.transition_grids_dir_name
+        intermediate_grids_dir = path_dir / self.intermediate_grids_dir_name
 
         if image_height == "auto" or image_width == "auto":
             max_image_height, max_image_width = 0, 0
@@ -65,6 +78,7 @@ class TaskProblemSet:
         # Save files into dir structure
         ###
         leading_zeros_width = len(str(len(self.task_problems) - 1))
+        data_config = defaultdict(list)
         for i_problem, task_problem in enumerate(self.task_problems):
             problem_name = f"{i_problem:0{leading_zeros_width}d}"
 
@@ -94,6 +108,12 @@ class TaskProblemSet:
             init_grid_image.save(init_grid_dir / (problem_name + IMAGE_EXTENSION))
             tgt_grid_image.save(tgt_grid_dir / (problem_name + IMAGE_EXTENSION))
 
+            data_config["rel_image_paths_0"].append(
+                str(self.init_grid_dir_name / (problem_name + IMAGE_EXTENSION))
+            )
+            data_config["rel_image_paths_1"].append(
+                str(self.tgt_grid_dir_name / (problem_name + IMAGE_EXTENSION))
+            )
             if task_problem.intermediate_grids is not None:
                 intermediate_grids_dir.mkdir(exist_ok=True)
                 interpolation_video = [init_grid_image]
@@ -117,6 +137,13 @@ class TaskProblemSet:
                     / (problem_name + VIDEO_EXTENSION),
                     fps=3,
                 )
+
+                data_config["rel_video_paths"].append(
+                    str(
+                        self.intermediate_grids_dir_name
+                        / (problem_name + VIDEO_EXTENSION)
+                    )
+                )
             else:
                 intermediate_grids_render_metadata = None
 
@@ -127,3 +154,14 @@ class TaskProblemSet:
                 tgt_grid_render_metadata=tgt_grid_render_metadata,
                 intermediate_grids_render_metadata=intermediate_grids_render_metadata,
             ).save(problems_dir / (problem_name + PROBLEM_EXTENSION))
+
+        # Save dataset configurations files based on subset_size
+        if subset_sizes is not None:
+            for subset_size in subset_sizes:
+                filename = path_dir / f"data_group_n{subset_size}.json"
+                with open(filename, "w") as f:
+                    json.dump({k: v[:subset_size] for k, v in data_config.items()}, f)
+        else:
+            filename = path_dir / "data_group.json"
+            with open(filename, "w") as f:
+                json.dump(data_config, f)

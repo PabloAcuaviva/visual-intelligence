@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from tasks.json_arc import process_arc_like_folder
+from visual_logic.tasks.json_arc import process_arc_like_folder
 
 if __name__ == "__main__":
     arc_like_tasks = ["arc-agi", "arc-agi-2", "arc-dataset-tama"]
