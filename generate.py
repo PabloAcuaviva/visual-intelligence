@@ -108,7 +108,7 @@ if __name__ == "__main__":
     ###
     generate_maze_dataset(
         generate_intermediate_states=False,
-        subset_sizes=[1, 3, 5, 10, 20, 40, 80, 100, 200, 500, 1000],
+        subset_sizes=[1, 3, 5, 10, 20, 40, 60, 80, 100, 200, 500, 1000],
         n_train=1000,
         n_test=100,
     )

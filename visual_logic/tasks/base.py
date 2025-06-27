@@ -10,6 +10,7 @@ from PIL import Image
 from pydantic import BaseModel, field_validator
 from tqdm import tqdm
 
+from visual_logic.tasks.render.render import parse
 from visual_logic.tasks.render.schemas import RenderMetadata, RenderStyle
 from visual_logic.typing_and_extensions import Grid, Video
 
@@ -179,7 +180,6 @@ class RenderedTaskProblem(BaseModel):
         grids_video: Optional[Video] = None,
         **parse_kwargs: Any,
     ) -> Grid | list[Grid]:
-        raise NotImplementedError()
         if (
             sum(x is not None for x in [init_grid_image, tgt_grid_image, grids_video])
             != 1
@@ -189,9 +189,48 @@ class RenderedTaskProblem(BaseModel):
             )
 
         if init_grid_image is not None:
-            pass
+            parse(
+                init_grid_image,
+                render_style=self.render_style,
+                render_metadata=self.init_grid_render_metadata,
+                **parse_kwargs,
+            )
 
         if tgt_grid_image is not None:
-            pass
+            parse(
+                tgt_grid_image,
+                render_style=self.render_style,
+                render_metadata=self.tgt_grid_render_metadata,
+                **parse_kwargs,
+            )
 
-        # Else: Parse videoAny]
+        ###
+        # Parse full video - [init_grid_image, *intermediate_grid_image, tgt_grid_image]
+        ###
+        parsed_video = [
+            parse(
+                grids_video[0],
+                render_style=self.render_style,
+                render_metadata=self.init_grid_render_metadata,
+                **parse_kwargs,
+            )
+        ]
+
+        for intermediate_grid_image in grids_video[1:-1]:
+            parsed_video.append(
+                parse(
+                    intermediate_grid_image,
+                    render_style=self.render_style,
+                    render_metadata=self.intermediate_grids_render_metadata,
+                    **parse_kwargs,
+                )
+            )
+        parsed_video.append(
+            parse(
+                grids_video[-1],
+                render_style=self.render_style,
+                render_metadata=self.tgt_grid_render_metadata,
+                **parse_kwargs,
+            )
+        )
+        return parsed_video

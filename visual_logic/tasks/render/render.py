@@ -3,17 +3,21 @@ from typing import Literal
 import numpy as np
 from PIL import Image
 
-from visual_logic.tasks.base import TaskProblem
 from visual_logic.tasks.render.schemas import RenderMetadata, RenderStyle
 
 Grid = list[list[int]]
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from visual_logic.tasks.base import TaskProblem
 
 
 ###
 # Functions
 ###
 def get_auto_image_dim(
-    task_problem: TaskProblem, render_style: RenderStyle
+    task_problem: "TaskProblem", render_style: RenderStyle
 ) -> tuple[int, int]:
     grids_to_check = [task_problem.init_grid, task_problem.tgt_grid]
     if task_problem.intermediate_grids is not None:

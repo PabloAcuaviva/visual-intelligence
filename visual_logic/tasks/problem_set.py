@@ -108,10 +108,10 @@ class TaskProblemSet:
             init_grid_image.save(init_grid_dir / (problem_name + IMAGE_EXTENSION))
             tgt_grid_image.save(tgt_grid_dir / (problem_name + IMAGE_EXTENSION))
 
-            data_config["rel_image_paths_0"].append(
+            data_config["rel_image_0_paths"].append(
                 str(self.init_grid_dir_name / (problem_name + IMAGE_EXTENSION))
             )
-            data_config["rel_image_paths_1"].append(
+            data_config["rel_image_1_paths"].append(
                 str(self.tgt_grid_dir_name / (problem_name + IMAGE_EXTENSION))
             )
             if task_problem.intermediate_grids is not None:
@@ -155,6 +155,9 @@ class TaskProblemSet:
                 intermediate_grids_render_metadata=intermediate_grids_render_metadata,
             ).save(problems_dir / (problem_name + PROBLEM_EXTENSION))
 
+            data_config["rel_metadata_paths"].append(
+                str(self.problems_dir_name / (problem_name + PROBLEM_EXTENSION))
+            )
         # Save dataset configurations files based on subset_size
         if subset_sizes is not None:
             for subset_size in subset_sizes:
