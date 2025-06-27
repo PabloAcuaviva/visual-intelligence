@@ -38,4 +38,4 @@ def discrete_similarity(
     else:
         valid_mask = np.ones_like(grid0, dtype=bool)
 
-    return np.all((grid0 == grid1)[valid_mask])
+    return float(np.all((grid0 == grid1)[valid_mask]))
