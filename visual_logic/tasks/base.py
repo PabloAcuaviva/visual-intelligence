@@ -189,7 +189,7 @@ class RenderedTaskProblem(BaseModel):
             )
 
         if init_grid_image is not None:
-            parse(
+            return parse(
                 init_grid_image,
                 render_style=self.render_style,
                 render_metadata=self.init_grid_render_metadata,
@@ -197,7 +197,7 @@ class RenderedTaskProblem(BaseModel):
             )
 
         if tgt_grid_image is not None:
-            parse(
+            return parse(
                 tgt_grid_image,
                 render_style=self.render_style,
                 render_metadata=self.tgt_grid_render_metadata,
