@@ -239,6 +239,6 @@ def parse(
         iteration += 1
 
     # Final recognition pass with the current image state
-    parsed_grid, _, _ = _parse_from_np_image(np_image, render_metadata)
+    parsed_grid, _, _ = _parse_from_np_image(np_image, render_metadata, render_style)
 
     return parsed_grid
