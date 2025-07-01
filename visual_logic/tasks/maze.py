@@ -16,9 +16,9 @@ class MazeSpecificMetadata(TypedDict):
 class Maze(Task):
     # Ids grid
     WALL_BLOCK = 0
-    PATH_BLOCK = 1
-    START_BLOCK = 3
+    WALKABLE_BLOCK = 1
     END_BLOCK = 2
+    START_BLOCK = 3
     SOLUTION_BLOCK = 4
 
     def __init__(
@@ -99,7 +99,7 @@ class Maze(Task):
         start_x, start_y = random.randrange(logical_width), random.randrange(
             logical_height
         )
-        maze[2 * start_y + 1, 2 * start_x + 1] = self.PATH_BLOCK
+        maze[2 * start_y + 1, 2 * start_x + 1] = self.WALKABLE_BLOCK
         in_maze.add((start_x, start_y))
 
         # Get all cells not yet in maze
@@ -137,7 +137,7 @@ class Maze(Task):
             # Add the path to the maze
             for i in range(len(path)):
                 x, y = path[i]
-                maze[2 * y + 1, 2 * x + 1] = self.PATH_BLOCK
+                maze[2 * y + 1, 2 * x + 1] = self.WALKABLE_BLOCK
                 in_maze.add((x, y))
 
                 # Connect to next cell in path
@@ -145,7 +145,7 @@ class Maze(Task):
                     next_x, next_y = path[i + 1]
                     wall_x = x + next_x + 1
                     wall_y = y + next_y + 1
-                    maze[wall_y, wall_x] = self.PATH_BLOCK
+                    maze[wall_y, wall_x] = self.WALKABLE_BLOCK
 
             # Update remaining cells
             remaining_cells = [
@@ -162,7 +162,7 @@ class Maze(Task):
         path_cells = []
         for y in range(1, maze.shape[0], 2):
             for x in range(1, maze.shape[1], 2):
-                if maze[y, x] == self.PATH_BLOCK:
+                if maze[y, x] == self.WALKABLE_BLOCK:
                     path_cells.append((x, y))
         return path_cells
 
