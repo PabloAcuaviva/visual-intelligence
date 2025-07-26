@@ -1,8 +1,9 @@
 import json
+from copy import deepcopy
 from functools import wraps
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, TypedDict
+from typing import Any, Optional, TypedDict
 from zipfile import ZipFile
 
 from tqdm import tqdm
@@ -93,11 +94,41 @@ def json_arc_to_problem_set(
     return TaskProblemSet(train_problems), TaskProblemSet(test_problems)
 
 
+def calculate_cell_size(
+    image_height: int,
+    image_width: int,
+    *grids: Grid,
+    default_min_cell_size: int = 11,
+    grid_border_size: int = 2,
+    valid_cell_sizes: Optional[list[int]] = None,
+) -> int:
+    max_w, max_h = 0, 0
+
+    for grid in grids:
+        max_w = max(max_w, len(grid[0]))
+        max_h = max(max_h, len(grid))
+
+    cell_space_width = (image_width - (max_w + 1) * grid_border_size) // max_w
+    cell_space_height = (image_height - (max_h + 1) * grid_border_size) // max_h
+
+    cell_size = min(cell_space_width, cell_space_height)
+
+    if valid_cell_sizes is not None:
+        cell_size = min(valid_cell_sizes, key=lambda x: abs(x - cell_size))
+
+    if cell_size < default_min_cell_size:
+        raise ValueError(
+            f"Calculated cell size to fit ({cell_size=}) would be smaller than {default_min_cell_size=}. {max_w=} and {max_h=}"
+        )
+    return cell_size
+
+
 @accept_path_or_zip
 def process_arc_like_folder(
     input_path: Path,
     output_path: Path,
     nested: bool = True,
+    same_cell_size_all_problems: bool = False,
 ) -> None:
     """Given a path containing JSON in ARC-AGI format, process them into task problems."""
     # Notice we fix this to be able to have the same values for all
@@ -119,7 +150,7 @@ def process_arc_like_folder(
         background_color=(0, 0, 0),  # Black background
         border_color=(85, 85, 85),  # Medium gray border
     )
-    image_width = image_height = 392  # Adjusted for a maximum 30x30 grid
+    image_width = image_height = 400  # Adjusted for a maximum 30x30 grid
 
     files = list(input_path.iterdir())
     output_path.mkdir(exist_ok=True, parents=True)
@@ -135,15 +166,44 @@ def process_arc_like_folder(
 
         train_problems, test_problems = json_arc_to_problem_set(path)
 
+        problem_render_style = deepcopy(render_style)
+
+        if not same_cell_size_all_problems:
+            try:
+                problem_render_style.cell_size = calculate_cell_size(
+                    image_height,
+                    image_width,
+                    *[
+                        train_problem.init_grid
+                        for train_problem in train_problems.task_problems
+                    ],
+                    *[
+                        train_problem.tgt_grid
+                        for train_problem in train_problems.task_problems
+                    ],
+                    *[
+                        test_problem.init_grid
+                        for test_problem in test_problems.task_problems
+                    ],
+                    *[
+                        test_problem.tgt_grid
+                        for test_problem in test_problems.task_problems
+                    ],
+                    default_min_cell_size=render_style.cell_size,
+                    grid_border_size=render_style.grid_border_size,
+                )
+            except ValueError as e:
+                print(f"Couldn't save {input_path} as cells would be too small!\n{e}")
+                return
         train_problems.save(
             path_dir=output_path / path.stem / "train",
-            render_style=render_style,
+            render_style=problem_render_style,
             image_height=image_height,
             image_width=image_width,
         )
         test_problems.save(
             path_dir=output_path / path.stem / "test",
-            render_style=render_style,
+            render_style=problem_render_style,
             image_height=image_height,
             image_width=image_width,
         )

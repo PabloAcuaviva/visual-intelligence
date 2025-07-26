@@ -37,6 +37,7 @@ class Navigation2D(Task):
         n_blocks: int = 2,
         block_size_range: tuple = (2, 4),
         barrier_holes_range: tuple = (1, 4),
+        min_manhattan_distance: int = 0,
     ):
         if width < 3 or height < 3:
             raise ValueError("Width and height must be at least 3")
@@ -55,6 +56,7 @@ class Navigation2D(Task):
         self.n_blocks = n_blocks
         self.block_size_range = block_size_range
         self.barrier_holes_range = barrier_holes_range
+        self.min_manhattan_distance = min_manhattan_distance
         if seed is not None:
             random.seed(seed)
             np.random.seed(seed)
@@ -257,6 +259,13 @@ class Navigation2D(Task):
                 self._set_start_end_points(
                     self.grid, self.valid_starts, self.valid_ends
                 )
+                if (
+                    abs(self.start[0] - self.end[0]) + abs(self.start[1] - self.end[1])
+                    < self.min_manhattan_distance
+                ):
+                    raise ValueError(
+                        f"Start and end points are too close (Manhattan distance < {self.min_manhattan_distance})"
+                    )  # This will be caught by the max_attempts loop
                 self.solution_path = self._find_shortest_path(self.grid)
                 if self.solution_path:
                     break
@@ -266,6 +275,7 @@ class Navigation2D(Task):
                 raise ValueError(
                     f"Could not generate valid navigation problem after {max_attempts} attempts"
                 )
+
         output_grid = self.grid.copy()
         if self.solution_path:
             for x, y in self.solution_path:

@@ -1,7 +1,7 @@
 import json
 from collections import defaultdict
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Optional
 
 from diffusers.utils.export_utils import export_to_video
 
@@ -39,11 +39,11 @@ class TaskProblemSet:
 
     def save(
         self,
-        path_dir: Path,
+        path_dir: Path | str,
         render_style: RenderStyle,
         image_height: Literal["auto", "auto-per-problem"] | int = "auto",
         image_width: Literal["auto", "auto-per-problem"] | int = "auto",
-        subset_sizes: list[int] = None,
+        subset_sizes: Optional[list[int]] = None,
     ) -> None:
         ###
         # Generetate dir structure

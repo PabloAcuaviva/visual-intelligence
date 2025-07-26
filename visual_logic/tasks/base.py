@@ -79,7 +79,9 @@ class Task(ABC):
 
 
 class TaskDatasetGenerator:
-    def __init__(self, task: Task, dist_fn: Callable[[Task, Task], float]):
+    def __init__(
+        self, task: Task, dist_fn: Callable[[TaskProblem, TaskProblem], float]
+    ):
         self.task = task
         self.dist_fn = dist_fn
         super().__init__()
