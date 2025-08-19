@@ -96,13 +96,13 @@ class TaskProblemSet:
                 task_problem.init_grid,
                 render_style,
                 image_height=task_problem_image_height,
-                image_width=task_problem_image_width,
+                image_width=task_problem_image_width,  # type: ignore
             )
             tgt_grid_image, tgt_grid_render_metadata = render(
                 task_problem.tgt_grid,
                 render_style,
                 image_height=task_problem_image_height,
-                image_width=task_problem_image_width,
+                image_width=task_problem_image_width,  # type: ignore
             )
 
             init_grid_image.save(init_grid_dir / (problem_name + IMAGE_EXTENSION))
@@ -123,7 +123,7 @@ class TaskProblemSet:
                         grid,
                         render_style,
                         image_height=task_problem_image_height,
-                        image_width=task_problem_image_width,
+                        image_width=task_problem_image_width,  # type: ignore
                     )
                     interpolation_video += [intermediate_grid_image]
                     intermediate_grids_render_metadata += [

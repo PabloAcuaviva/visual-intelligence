@@ -85,6 +85,7 @@ def generate_small_maze_dataset(
     ).generate(n_train=n_train, n_test=n_test, distance_threshold=0.5)
 
     shutil.rmtree("datasets/maze_small", ignore_errors=True)
+
     TaskProblemSet(task_problems=train_dataset).save(
         "datasets/maze_small/train",
         MazeBaseStyle,
