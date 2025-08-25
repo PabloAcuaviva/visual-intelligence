@@ -14,6 +14,9 @@ from .registry import register_dataset
 @register_dataset("connect4")
 def generate_connect4_dataset(
     subset_sizes: Optional[list[int]] = None,
+    n_train: int = 100,
+    n_test: int = 200,
+    style=ArcBaseStyle,
 ):
     def connect4_hamming_distance(tp0: TaskProblem, tp1: TaskProblem) -> float:
         g0 = np.array(tp0.tgt_grid)
@@ -30,8 +33,8 @@ def generate_connect4_dataset(
         task=Connect4(seed=420),
         dist_fn=connect4_hamming_distance,
     ).generate(
-        n_train=100,
-        n_test=100,
+        n_train=n_train,
+        n_test=n_test,
         attempts_multiplier=100,
         distance_threshold=0.25,
     )
@@ -39,14 +42,14 @@ def generate_connect4_dataset(
     shutil.rmtree("datasets/connect4", ignore_errors=True)
     TaskProblemSet(task_problems=connect4_train).save(
         "datasets/connect4/train",
-        ArcBaseStyle,
+        style,
         image_width=image_width,
         image_height=image_height,
         subset_sizes=subset_sizes,
     )
     TaskProblemSet(task_problems=connect4_test).save(
         "datasets/connect4/test",
-        ArcBaseStyle,
+        style,
         image_width=image_width,
         image_height=image_height,
     )

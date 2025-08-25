@@ -138,12 +138,12 @@ class TaskProblemSet:
                     fps=3,
                 )
 
-                data_config["rel_video_paths"].append(
-                    str(
-                        self.intermediate_grids_dir_name
-                        / (problem_name + VIDEO_EXTENSION)
-                    )
-                )
+                # data_config["rel_video_paths"].append(
+                #     str(
+                #         self.intermediate_grids_dir_name
+                #         / (problem_name + VIDEO_EXTENSION)
+                #     )
+                # )
             else:
                 intermediate_grids_render_metadata = None
 

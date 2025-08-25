@@ -13,7 +13,10 @@ from .registry import register_dataset
 
 @register_dataset("langton_ant")
 def generate_langton_ant_dataset(
-    steps: int = 1, subset_sizes: Optional[list[int]] = None
+    steps: int = 1,
+    subset_sizes: Optional[list[int]] = None,
+    n_train: int = 100,
+    n_test: int = 200,
 ):
     def ant_hamming_distance(tp0: TaskProblem, tp1: TaskProblem) -> float:
         g0 = np.array(tp0.tgt_grid)
@@ -29,9 +32,11 @@ def generate_langton_ant_dataset(
             steps=steps,
             initialization="random",
             seed=123,
+            init_grid_as=0,
+            ant_initial_dir="N",
         ),
         dist_fn=ant_hamming_distance,
-    ).generate(n_train=100, n_test=200, distance_threshold=0.3)
+    ).generate(n_train=n_train, n_test=n_test, distance_threshold=0.3)
 
     shutil.rmtree(f"datasets/langton_ant_step{steps}", ignore_errors=True)
     TaskProblemSet(task_problems=ant_train).save(

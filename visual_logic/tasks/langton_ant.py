@@ -39,6 +39,7 @@ class LangtonAnt(Task):
         ant_initial_pos: Optional[Tuple[int, int]] = None,
         ant_initial_dir: Optional[str] = None,
         seed: Optional[int] = None,
+        init_grid_as: Optional[int] = None,
     ):
         self.width = width
         self.height = height
@@ -46,6 +47,7 @@ class LangtonAnt(Task):
         self.initialization = initialization
         self.ant_initial_pos = ant_initial_pos
         self.ant_initial_dir = ant_initial_dir
+        self.init_grid_as = init_grid_as
         self.seed = seed
         if seed is not None:
             random.seed(seed)
@@ -78,6 +80,8 @@ class LangtonAnt(Task):
     def generate(self) -> TaskProblem:
         grid = self._initialize_grid()
         x, y, direction = self._initialize_ant()
+        if self.init_grid_as is not None:
+            grid[x, y] = self.init_grid_as
         ant_path = [(x, y)]
         history = []
         # Place ant in the initial grid
