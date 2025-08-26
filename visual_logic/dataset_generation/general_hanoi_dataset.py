@@ -36,6 +36,8 @@ def generate_general_hanoi_dataset(
     steps: int | Literal["all"] = "all",
     n_train: int = 100,
     n_test: int = 200,
+    image_height: int = 64,
+    image_width: int = 320,
 ):
     def hamming_distance(tp0: TaskProblem, tp1: TaskProblem) -> float:
         g0 = np.array(tp0.init_grid)
@@ -52,9 +54,6 @@ def generate_general_hanoi_dataset(
         n_test=n_test,
         distance_threshold=0.01,
     )
-
-    image_height = 64
-    image_width = 320
 
     shutil.rmtree(f"datasets/general_hanoi_step{steps}", ignore_errors=True)
     TaskProblemSet(task_problems=hanoi_train).save(

@@ -618,7 +618,7 @@ if __name__ == "__main__":
     # )
 
     process_single_json_file(
-        json_path=Path("tasks/json/arc-explore/connect.json"),
+        json_path=Path("tasks/resources/arc-explore/connect.json"),
         output_folder=Path("datasets/arc-explore/connect"),
         H=320,
         W=320,

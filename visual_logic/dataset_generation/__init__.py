@@ -1,3 +1,4 @@
+from .chess_dataset import *
 from .connect4_dataset import *
 from .game_of_life_dataset import *
 from .general_hanoi_dataset import *

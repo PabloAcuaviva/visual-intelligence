@@ -17,6 +17,8 @@ def generate_connect4_dataset(
     n_train: int = 100,
     n_test: int = 200,
     style=ArcBaseStyle,
+    image_width: int = 240,
+    image_height: int = 240,
 ):
     def connect4_hamming_distance(tp0: TaskProblem, tp1: TaskProblem) -> float:
         g0 = np.array(tp0.tgt_grid)
@@ -24,8 +26,6 @@ def generate_connect4_dataset(
         if g0.shape != g1.shape:
             raise ValueError("Grid shapes do not match")
         return np.sum(g0 != g1) / g0.size
-
-    image_width = image_height = 240
 
     subset_sizes = subset_sizes
 

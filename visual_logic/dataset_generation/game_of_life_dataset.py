@@ -18,6 +18,8 @@ def generate_gol_dataset(
     n_train=100,
     n_test=200,
     style=ArcBaseStyle,
+    image_width: int = 17 * 16,
+    image_height: int = 17 * 16,
 ):
     def gol_hamming_distance(tp0: TaskProblem, tp1: TaskProblem) -> float:
         g0 = np.array(tp0.tgt_grid)
@@ -37,8 +39,6 @@ def generate_gol_dataset(
         ),
         dist_fn=gol_hamming_distance,
     ).generate(n_train=n_train, n_test=n_test, distance_threshold=0.3)
-
-    image_width = image_height = 17 * 16
 
     shutil.rmtree(f"datasets/gol_step{steps}", ignore_errors=True)
     TaskProblemSet(task_problems=gol_train).save(

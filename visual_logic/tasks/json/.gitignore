@@ -1,3 +1,0 @@
-# Ignore folders with many JSONS. Ideally we will save this as .zip files groups and be able to dynamically decode them
-# so that it is more maneagable by git
-arc-dataset-tama/
