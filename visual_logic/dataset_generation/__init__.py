@@ -1,3 +1,4 @@
+from .cellular_automata import *
 from .chess_dataset import *
 from .connect4_dataset import *
 from .game_of_life_dataset import *

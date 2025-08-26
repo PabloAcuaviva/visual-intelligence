@@ -36,7 +36,14 @@ if __name__ == "__main__":
     # DATASET_GENERATORS["general_hanoi"](steps=1, subset_sizes=subset_sizes)
 
     # DATASET_GENERATORS["tower_of_hanoi"]()
-    DATASET_GENERATORS["chess_meta_in_n"](
+    # DATASET_GENERATORS["chess_meta_in_n"](
+    #     subset_sizes=subset_sizes,
+    #     n_train=max(subset_sizes),
+    #     n_test=n_test,
+    # )
+
+    DATASET_GENERATORS["cellular_automata_1d"](
+        rule=111,
         subset_sizes=subset_sizes,
         n_train=max(subset_sizes),
         n_test=n_test,
