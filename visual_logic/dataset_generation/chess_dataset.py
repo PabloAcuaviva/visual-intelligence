@@ -1,4 +1,5 @@
 import shutil
+from pathlib import Path
 from typing import Optional
 
 import numpy as np
@@ -21,6 +22,7 @@ def generate_chess_mate_in_n_dataset(
     style=ArcExtendedStyle,
     image_width: int = 272,
     image_height: int = 272,
+    extend_dataset: Optional[Path] = None,
 ):
     def hamming_distance(tp0: TaskProblem, tp1: TaskProblem) -> float:
         g0 = np.array(tp0.tgt_grid)
@@ -32,7 +34,9 @@ def generate_chess_mate_in_n_dataset(
     subset_sizes = subset_sizes
 
     chess_train, chess_test = TaskDatasetGenerator(
-        task=ChessMate(mate_in=mate_in, initial_turn=initial_turn),
+        task=ChessMate(
+            mate_in=mate_in, initial_turn=initial_turn, generate_sequential=True
+        ),
         dist_fn=hamming_distance,
     ).generate(
         n_train=n_train,

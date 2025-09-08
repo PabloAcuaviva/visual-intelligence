@@ -1,4 +1,5 @@
 import shutil
+from pathlib import Path
 from typing import Optional
 
 import numpy as np
@@ -18,6 +19,7 @@ def generate_hitori_dataset(
     subset_sizes: Optional[list[int]] = None,
     n_train: int = 100,
     n_test: int = 200,
+    extend_dataset: Optional[Path] = None,
 ):
     def hitori_distance(tp0: TaskProblem, tp1: TaskProblem) -> float:
         g0 = np.array(tp0.init_grid)
@@ -27,6 +29,7 @@ def generate_hitori_dataset(
     hitori_train, hitori_test = TaskDatasetGenerator(
         task=Hitori(size=size, difficulty=difficulty, seed=123),
         dist_fn=hitori_distance,
+        extend_dataset=extend_dataset,
     ).generate(n_train=n_train, n_test=n_test, distance_threshold=0.3)
 
     style = ArcBaseStyle

@@ -1,4 +1,5 @@
 import shutil
+from pathlib import Path
 from typing import Optional
 
 import numpy as np
@@ -19,6 +20,7 @@ def generate_connect4_dataset(
     style=ArcBaseStyle,
     image_width: int = 240,
     image_height: int = 240,
+    extend_dataset: Optional[Path] = None,
 ):
     def connect4_hamming_distance(tp0: TaskProblem, tp1: TaskProblem) -> float:
         g0 = np.array(tp0.tgt_grid)
@@ -32,10 +34,11 @@ def generate_connect4_dataset(
     connect4_train, connect4_test = TaskDatasetGenerator(
         task=Connect4(seed=420),
         dist_fn=connect4_hamming_distance,
+        extend_dataset=extend_dataset,
     ).generate(
         n_train=n_train,
         n_test=n_test,
-        attempts_multiplier=100,
+        attempts_multiplier=5000,
         distance_threshold=0.25,
     )
 

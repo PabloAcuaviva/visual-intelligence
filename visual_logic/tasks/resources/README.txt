@@ -18,3 +18,8 @@ This repository includes chess puzzle data sourced from [Hugging Face Datasets](
 - Each entry provides: FEN position, full PGN context, UCI and SAN solution moves, and thematic tags
 
 All content is credited to the [Lichess](https://lichess.org) community puzzle database and distributed via Hugging Face under the [CC0 1.0 license](https://creativecommons.org/publicdomain/zero/1.0/), making it freely available for research and educational use.
+
+
+# Cellular automata 1D
+
+Complexities are extracted from [A Note on Elementary Cellular Automata Classification](https://arxiv.org/pdf/1306.5577) and recorded into the code in `cellular_automata_1d.py` or calculated with the script `complexities_eca_1d.py`.

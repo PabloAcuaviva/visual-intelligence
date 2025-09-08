@@ -1,4 +1,5 @@
 import shutil
+from pathlib import Path
 from typing import Literal, Optional
 
 import numpy as np
@@ -38,6 +39,7 @@ def generate_general_hanoi_dataset(
     n_test: int = 200,
     image_height: int = 64,
     image_width: int = 320,
+    extend_dataset: Optional[Path] = None,
 ):
     def hamming_distance(tp0: TaskProblem, tp1: TaskProblem) -> float:
         g0 = np.array(tp0.init_grid)
@@ -49,6 +51,7 @@ def generate_general_hanoi_dataset(
     hanoi_train, hanoi_test = TaskDatasetGenerator(
         task=GeneralHanoi(num_disks=5, step=steps),
         dist_fn=hamming_distance,
+        extend_dataset=extend_dataset,
     ).generate(
         n_train=n_train,
         n_test=n_test,

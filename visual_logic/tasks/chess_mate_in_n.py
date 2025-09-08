@@ -108,13 +108,16 @@ class ChessMate(Task):
         mate_in: int = 1,
         initial_turn: str = "w",
         seed: Optional[int] = None,
-        problem_id: Optional[int] = None,
+        problem_id: int = 0,
+        generate_sequential: bool = False,
     ):
         self.mate_in = mate_in
         self.initial_turn = initial_turn
         self.seed = seed
         if seed is not None:
             random.seed(seed)
+
+        self.generate_sequential = generate_sequential
         self.problem_id = problem_id
 
         chess_games_json = (
@@ -136,10 +139,11 @@ class ChessMate(Task):
             raise ValueError(
                 f"No positions found with mate in {self.mate_in} for {self.initial_turn}"
             )
-        if self.problem_id is None:
+        if not self.generate_sequential:
             game_data = random.choice(self.filtered)
         else:
             game_data = self.filtered[self.problem_id]
+            self.problem_id += 1
 
         fen = game_data["FEN"]
         moves_san = game_data["MovesSAN"].split()

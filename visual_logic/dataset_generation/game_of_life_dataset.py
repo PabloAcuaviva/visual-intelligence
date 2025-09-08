@@ -1,4 +1,5 @@
 import shutil
+from pathlib import Path
 from typing import Optional
 
 import numpy as np
@@ -14,12 +15,17 @@ from .registry import register_dataset
 @register_dataset("gol")
 def generate_gol_dataset(
     steps: int = 1,
+    gol_variant_name: str = "gol",
     subset_sizes: Optional[list[int]] = None,
     n_train=100,
     n_test=200,
     style=ArcBaseStyle,
     image_width: int = 17 * 16,
     image_height: int = 17 * 16,
+    extend_dataset: Optional[Path] = None,
+    survival_rule: list[int] | None = None,
+    birth_rule: list[int] | None = None,
+    distance_threshold: float = 0.1,
 ):
     def gol_hamming_distance(tp0: TaskProblem, tp1: TaskProblem) -> float:
         g0 = np.array(tp0.tgt_grid)
@@ -36,20 +42,28 @@ def generate_gol_dataset(
             initialization="random",
             density=0.4,
             seed=42,
+            survival_rule=survival_rule,
+            birth_rule=birth_rule,
         ),
         dist_fn=gol_hamming_distance,
-    ).generate(n_train=n_train, n_test=n_test, distance_threshold=0.3)
+        extend_dataset=extend_dataset,
+    ).generate(
+        n_train=n_train,
+        n_test=n_test,
+        distance_threshold=distance_threshold,
+        attempts_multiplier=500,
+    )
 
-    shutil.rmtree(f"datasets/gol_step{steps}", ignore_errors=True)
+    shutil.rmtree(f"datasets/{gol_variant_name}_step{steps}", ignore_errors=True)
     TaskProblemSet(task_problems=gol_train).save(
-        f"datasets/gol_step{steps}/train",
+        f"datasets/{gol_variant_name}_step{steps}/train",
         style,
         subset_sizes=subset_sizes,
         image_width=image_width,
         image_height=image_height,
     )
     TaskProblemSet(task_problems=gol_test).save(
-        f"datasets/gol_step{steps}/test",
+        f"datasets/{gol_variant_name}_step{steps}/test",
         style,
         image_width=image_width,
         image_height=image_height,

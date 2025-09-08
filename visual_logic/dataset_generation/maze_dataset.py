@@ -1,4 +1,5 @@
 import shutil
+from pathlib import Path
 from typing import Optional
 
 from visual_logic.tasks.base import TaskDatasetGenerator, TaskProblem
@@ -14,14 +15,15 @@ def generate_maze_dataset(
     generate_intermediate_states: bool = False,
     subset_sizes: Optional[list[int]] = None,
     n_train: int = 1000,
-    n_test: int = 100,
+    n_test: int = 200,
+    extend_dataset: Optional[Path] = None,
 ):
     def path_distance(
         task_problem_0: TaskProblem,
         task_problem_1: TaskProblem,
     ) -> float:
-        path0 = set(task_problem_0.task_specific_metadata["path"])
-        path1 = set(task_problem_1.task_specific_metadata["path"])
+        path0 = set([tuple(t) for t in task_problem_0.task_specific_metadata["path"]])
+        path1 = set([tuple(t) for t in task_problem_1.task_specific_metadata["path"]])
         if len(path0) == 0 and len(path1) == 0:
             raise ValueError("Both paths are empty")
         intersection = len(path0.intersection(path1))
@@ -39,6 +41,7 @@ def generate_maze_dataset(
             generate_intermediate_states=generate_intermediate_states,
         ),
         dist_fn=path_distance,
+        extend_dataset=extend_dataset,
     ).generate(n_train=n_train, n_test=n_test, distance_threshold=0.5)
 
     shutil.rmtree("datasets/maze", ignore_errors=True)
@@ -55,14 +58,15 @@ def generate_small_maze_dataset(
     generate_intermediate_states: bool = False,
     subset_sizes: Optional[list[int]] = None,
     n_train: int = 1000,
-    n_test: int = 100,
+    n_test: int = 200,
+    extend_dataset: Optional[Path] = None,
 ):
     def path_distance(
         task_problem_0: TaskProblem,
         task_problem_1: TaskProblem,
     ) -> float:
-        path0 = set(task_problem_0.task_specific_metadata["path"])
-        path1 = set(task_problem_1.task_specific_metadata["path"])
+        path0 = set([tuple(t) for t in task_problem_0.task_specific_metadata["path"]])
+        path1 = set([tuple(t) for t in task_problem_1.task_specific_metadata["path"]])
         if len(path0) == 0 and len(path1) == 0:
             raise ValueError("Both paths are empty")
         intersection = len(path0.intersection(path1))
@@ -82,6 +86,7 @@ def generate_small_maze_dataset(
             generate_intermediate_states=generate_intermediate_states,
         ),
         dist_fn=path_distance,
+        extend_dataset=extend_dataset,
     ).generate(n_train=n_train, n_test=n_test, distance_threshold=0.5)
 
     shutil.rmtree("datasets/maze_small", ignore_errors=True)

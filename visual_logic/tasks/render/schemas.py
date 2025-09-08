@@ -81,6 +81,31 @@ ArcExtendedStyle = RenderStyle(
 )
 
 
+ChessStyle = RenderStyle(
+    cell_size=30,
+    grid_border_size=2,
+    value_to_color={
+        0: (0, 0, 0),  # Empty square background
+        ### White pieces
+        1: (144, 238, 144),  # White pawn (light green)
+        2: (173, 216, 230),  # White knight (light blue)
+        3: (216, 191, 216),  # White bishop (light purple)
+        4: (176, 196, 222),  # White rook (light steel blue)
+        5: (255, 182, 193),  # White queen (pink)
+        6: (255, 215, 0),  # White king (gold)
+        ### Black pieces
+        7: (0, 100, 0),  # Black pawn (dark green)
+        8: (0, 0, 139),  # Black knight (dark blue)
+        9: (128, 0, 128),  # Black bishop (dark purple)
+        10: (70, 130, 180),  # Black rook (steel blue)
+        11: (139, 0, 0),  # Black queen (dark red)
+        12: (184, 134, 11),  # Black king (dark goldenrod)
+    },
+    background_color=(0, 0, 0),
+    border_color=(85, 85, 85),
+)
+
+
 MazeBaseStyle = RenderStyle(
     cell_size=16,
     grid_border_size=0,

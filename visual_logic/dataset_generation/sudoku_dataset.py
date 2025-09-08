@@ -1,4 +1,5 @@
 import shutil
+from pathlib import Path
 from typing import Optional
 
 import numpy as np
@@ -18,6 +19,7 @@ def generate_sudoku_dataset(
     subset_sizes: Optional[list[int]] = None,
     n_train: int = 100,
     n_test: int = 200,
+    extend_dataset: Optional[Path] = None,
 ):
     def sudoku_distance(tp0: TaskProblem, tp1: TaskProblem) -> float:
         g0 = np.array(tp0.init_grid)
@@ -29,6 +31,7 @@ def generate_sudoku_dataset(
     sudoku_train, sudoku_test = TaskDatasetGenerator(
         task=Sudoku(difficulty=difficulty, variant=variant, seed=123),
         dist_fn=sudoku_distance,
+        extend_dataset=extend_dataset,
     ).generate(n_train=n_train, n_test=n_test, distance_threshold=0.3)
 
     image_width = image_height = 16 * (19 if variant == "standard" else 9)

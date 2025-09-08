@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import warnings
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -80,10 +81,16 @@ class Task(ABC):
 
 class TaskDatasetGenerator:
     def __init__(
-        self, task: Task, dist_fn: Callable[[TaskProblem, TaskProblem], float]
+        self,
+        task: Task,
+        dist_fn: Callable[[TaskProblem, TaskProblem], float],
+        extend_dataset: Optional[Path] = None,
     ):
         self.task = task
         self.dist_fn = dist_fn
+        self.extend_dataset = (
+            Path(extend_dataset) if extend_dataset is not None else None
+        )
         super().__init__()
 
     def generate(
@@ -93,58 +100,106 @@ class TaskDatasetGenerator:
         distance_threshold: float = 0.7,
         attempts_multiplier: int = 20,
     ) -> tuple[list[TaskProblem], list[TaskProblem]]:
-        train_dataset = self.generate_train_dataset(n_train)
-        test_dataset = self.generate_test_dataset(
-            train_dataset,
-            n_test=n_test,
-            distance_threshold=distance_threshold,
-            attempts_multiplier=attempts_multiplier,
-        )
+        if self.extend_dataset is None:
+            ###
+            # Generate new dataset
+            ###
+            train_dataset = self._generate_basic_dataset(n_train)
+            test_dataset = self._generate_dataset_far_from(
+                train_dataset,
+                n=n_test,
+                distance_threshold=distance_threshold,
+                attempts_multiplier=attempts_multiplier,
+            )
+        else:
+            ###
+            # Load train dataset
+            ###
+            problem_metadata_paths_train = sorted(
+                list((self.extend_dataset / "train" / "problem").iterdir())
+            )
+            if len(problem_metadata_paths_train) > n_train:
+                raise ValueError(
+                    f"Only expansion on number of training samples is valid, not reducing them, for this simply create a config. There are {len(problem_metadata_paths_train)} training problems in the dataset vs {n_train=}"
+                )
+            train_dataset = []
+            for problem_metadata_path in problem_metadata_paths_train:
+                with open(problem_metadata_path, "r") as f:
+                    task_problem = TaskProblem(**json.load(f)["task_problem"])
+                train_dataset.append(task_problem)
+
+            ###
+            # Load test of dataset to extend
+            ###
+            problem_metadata_paths_test = sorted(
+                list((self.extend_dataset / "test" / "problem").iterdir())
+            )
+            if len(problem_metadata_paths_test) != n_test:
+                raise NotImplementedError(
+                    f"Only expansion on number of training samples is implemented. Got {len(problem_metadata_paths_test)} != {n_test}."
+                )
+            test_dataset = []
+            for problem_metadata_path in problem_metadata_paths_test:
+                with open(problem_metadata_path, "r") as f:
+                    task_problem = TaskProblem(**json.load(f)["task_problem"])
+                test_dataset.append(task_problem)
+
+            ###
+            # Expand training samples
+            ###
+            train_dataset += self._generate_dataset_far_from(
+                test_dataset,
+                n=n_train - len(train_dataset),
+                distance_threshold=distance_threshold,
+                attempts_multiplier=attempts_multiplier,
+            )
+
         return train_dataset, test_dataset
 
-    def generate_test_dataset(
+    def _generate_dataset_far_from(
         self,
-        train_dataset: list[TaskProblem],
-        n_test: int,
+        dataset: list[TaskProblem],
+        n: int,
         distance_threshold: float = 0.7,
         attempts_multiplier: int = 50,
     ) -> list[TaskProblem]:
-        """Generate test problems sufficiently different from training problems."""
-        test_dataset = []
+        """Generate problems sufficiently different from dataaset problems."""
+        new_dataset = []
         attempts = 0
-        max_attempts = n_test * attempts_multiplier
+        max_attempts = n * attempts_multiplier
 
-        with tqdm(total=n_test, desc="Generating test dataset") as pbar:
-            while len(test_dataset) < n_test and attempts < max_attempts:
+        with tqdm(
+            total=n, desc=f"Generating new dataset with {distance_threshold=}"
+        ) as pbar:
+            while len(new_dataset) < n and attempts < max_attempts:
                 attempts += 1
 
                 test_task_problem = self.task.generate()
 
                 # Check distance from all training problems
                 min_distance = float("inf")
-                for train_task_problem in train_dataset:
+                for train_task_problem in dataset:
                     distance = self.dist_fn(test_task_problem, train_task_problem)
                     min_distance = min(min_distance, distance)
 
                 # If sufficiently different, add to test set
                 if min_distance >= distance_threshold:
-                    test_dataset.append(test_task_problem)
+                    new_dataset.append(test_task_problem)
                     pbar.update(1)
 
-            if len(test_dataset) < n_test:
+            if len(new_dataset) < n:
                 warnings.warn(
-                    f"Only generated {len(test_dataset)}/{n_test} test problems after {max_attempts} attempts."
+                    f"Only generated {len(new_dataset)}/{n} test problems after {max_attempts} attempts."
                 )
 
-        return test_dataset
+        return new_dataset
 
-    def generate_train_dataset(
+    def _generate_basic_dataset(
         self,
-        n_train: int,
+        n: int,
     ) -> list[TaskProblem]:
         train_dataset = [
-            self.task.generate()
-            for _ in tqdm(range(n_train), desc="Generating training dataset")
+            self.task.generate() for _ in tqdm(range(n), desc="Generating base dataset")
         ]
         return train_dataset
 

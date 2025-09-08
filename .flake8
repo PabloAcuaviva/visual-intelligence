@@ -4,7 +4,9 @@ max-line-length = 88
 #        E203: E203 whitespace before ':'
 #        E501: Enforce line length of 88, this is weakly enforced by black (but not fully)
 #        E231: Allow whitespace after ',' in function call
-extend-ignore = E731,E203,E501,E231,E402
+#        E266: Allow too many leading '#' for block comments
+#        E402: Allow imports not at top of file (e.g. for type checking)
+extend-ignore = E731,E203,E501,E231,E402,E266
 # Ignore 401: Allow unused imports in __init__.py files
 #        403: ... '*' used; unable to detect undefined names
 #        E231 missing whitespace after ':'
