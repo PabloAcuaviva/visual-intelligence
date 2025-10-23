@@ -4,13 +4,13 @@ if __name__ == "__main__":
     vdm_datasets_path = "datasets"
     n_test = 200
     subset_sizes = [3, 5, 10, 30, 50, 100, 300, 500, 1000, 3000, 5000]
-    
+
     generate_games = True
     generate_automatas = True
     generate_navigation = True
-    
+
     ###
-    # Games 
+    # Games
     ###
     if generate_games:
         DATASET_GENERATORS["hitori"](
@@ -25,7 +25,7 @@ if __name__ == "__main__":
             subset_sizes=subset_sizes,
             n_test=n_test,
         )
-        
+
         DATASET_GENERATORS["sudoku"](
             variant="mini",
             n_train=max(subset_sizes),
@@ -40,11 +40,11 @@ if __name__ == "__main__":
         )
 
         DATASET_GENERATORS["chess_mate_in_n"](
-            subset_sizes=[s for s in subset_sizes if s <= 2000], # Dataset bottleneck
+            subset_sizes=[s for s in subset_sizes if s <= 2000],  # Dataset bottleneck
             n_train=max(subset_sizes),
             n_test=n_test,
         )
-    
+
     ###
     # Automatas
     ###
@@ -65,12 +65,15 @@ if __name__ == "__main__":
                     n_test=n_test,
                 )
 
-        # Game of Life variants    
+        # Game of Life variants
         gol_rules = {
-            "Gol_DayAndNight": {"birth_rule": [3, 6, 7, 8], "survival_rule": [3, 4, 6, 7, 8]},
+            "Gol_DayAndNight": {
+                "birth_rule": [3, 6, 7, 8],
+                "survival_rule": [3, 4, 6, 7, 8],
+            },
             "Gol_Maze": {"birth_rule": [3], "survival_rule": [1, 2, 3, 4, 5]},
             "Gol_Seeds": {"birth_rule": [2], "survival_rule": []},
-            "Gol_Life": {"birth_rule": [3], "survival_rule": [2,3]},
+            "Gol_Life": {"birth_rule": [3], "survival_rule": [2, 3]},
             "Gol_B3_S2": {"birth_rule": [3], "survival_rule": [2]},
         }
         for gol_variant_name, rules in gol_rules.items():
@@ -83,7 +86,7 @@ if __name__ == "__main__":
                 distance_threshold=0.25 if gol_variant_name != "Seeds" else 0.15,
                 **rules,
             )
-        
+
         # Langton ant
         for steps in [2, 3, 5, 10]:
             DATASET_GENERATORS["langton_ant"](
@@ -92,7 +95,7 @@ if __name__ == "__main__":
                 n_train=max(subset_sizes),
                 n_test=n_test,
             )
-    
+
     ###
     # Navigation and mazes
     ###
@@ -112,4 +115,3 @@ if __name__ == "__main__":
             subset_sizes=subset_sizes,
             n_test=n_test,
         )
-        

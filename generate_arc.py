@@ -7,7 +7,7 @@ if __name__ == "__main__":
     arc_like_tasks = ["concept-arc", "arc-agi", "arc-dataset-tama", "arc-agi-2"]
     for arc_like_task in arc_like_tasks:
         input_path = Path(f"visual_intelligence/tasks/resources/{arc_like_task}.zip")
-        output_path = Path(f"datasets/arc-tasks/{arc_like_task}")        
+        output_path = Path(f"datasets/arc-tasks/{arc_like_task}")
         if input_path.exists():
             process_arc_like_folder(
                 input_path=input_path,
@@ -16,4 +16,6 @@ if __name__ == "__main__":
                 same_cell_size_all_problems=False,
             )
         else:
-            warnings.warn(f"{input_path=} not found, continuing with remaining paths...")
+            warnings.warn(
+                f"{input_path=} not found, continuing with remaining paths..."
+            )

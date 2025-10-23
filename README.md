@@ -1,18 +1,40 @@
 # Visual-Intelligence
 
-## Contribute
+This repository contains the scripts required to reproduce the datasets used in the paper **"Rethinking Visual Intelligence: Insights From Video Pretraining"**.
+It includes both **JSON** and **image** versions of the datasets, as well as the code to **decode images back into JSON** for downstream evaluation.
 
-1. Create a new environment. We use here conda as an example.
+---
+
+## Getting Started
+
+1. Create a new environment (example using conda):
+
 ```bash
-conda create -n visual-logic python=3.12 --no-default-packages
+conda create -n visual-intelligence python=3.12 --no-default-packages
+conda activate visual-intelligence
 conda install pip
+pip install -r requirements.txt
 ```
 
-2. Install pre-commit
+2. Generate datasets:
+
+```bash
+# ARC-related datasets
+python3 generate_arc.py
+
+# General visual intelligence tasks
+python3 generate.py
+```
+
+
+## Contributing
+
+We use pre-commit to maintain consistent code style.
+Install and run it as follows:
+
 ```bash
 pip install pre-commit
 pre-commit install
-pre-commit run --all-files # [Optional] Run against all files
+# Optional: run checks against all files
+pre-commit run --all-files
 ```
-
-TODO: Add conda .yaml instead of using a completely new environment (to install dependencies)
