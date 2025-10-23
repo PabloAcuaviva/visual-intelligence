@@ -26,6 +26,11 @@ python3 generate_arc.py
 python3 generate.py
 ```
 
+3. _(Optional)_ To generate training videos for VDM models, run:
+
+```bash
+python3 generate_videos_for_tasks.py
+```
 
 ## Contributing
 
