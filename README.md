@@ -1,4 +1,4 @@
-# Visual-logic
+# Visual-Intelligence
 
 ## Contribute
 

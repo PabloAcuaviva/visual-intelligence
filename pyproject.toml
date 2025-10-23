@@ -1,8 +1,8 @@
 # Project metadata
 [project]
-name = "visual-logic"
+name = "visual-intelligence"
 version = "0.1.0"
-description = "Generator, encoder and decoder for visual logic task in a grid-like environment."
+description = "Generation pipeline for visual intelligence datasets, providing structured JSON annotations and corresponding images."
 authors = [{name = "Pablo H.Acuaviva", email = "pablohacuaviva@gmail.com"}]
 dependencies = []
 
