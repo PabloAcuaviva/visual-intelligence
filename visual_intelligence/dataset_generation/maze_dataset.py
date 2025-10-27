@@ -1,6 +1,6 @@
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from visual_intelligence.tasks.base import TaskDatasetGenerator, TaskProblem
 from visual_intelligence.tasks.maze import Maze
@@ -17,6 +17,7 @@ def generate_maze_dataset(
     n_train: int = 1000,
     n_test: int = 200,
     extend_dataset: Optional[Path] = None,
+    out_dir: Union[str, Path] = "datasets",
 ):
     def path_distance(
         task_problem_0: TaskProblem,
@@ -44,13 +45,16 @@ def generate_maze_dataset(
         extend_dataset=extend_dataset,
     ).generate(n_train=n_train, n_test=n_test, distance_threshold=0.5)
 
-    shutil.rmtree("datasets/maze", ignore_errors=True)
+    out_dir = Path(out_dir)
+    out_dir = out_dir / "maze"
+    shutil.rmtree(out_dir, ignore_errors=True)
+
     TaskProblemSet(task_problems=train_dataset).save(
-        "datasets/maze/train",
+        out_dir / "train",
         MazeBaseStyle,
         subset_sizes=subset_sizes or [],
     )
-    TaskProblemSet(task_problems=test_dataset).save("datasets/maze/test", MazeBaseStyle)
+    TaskProblemSet(task_problems=test_dataset).save(out_dir / "test", MazeBaseStyle)
 
 
 @register_dataset("maze_small")
@@ -60,6 +64,7 @@ def generate_small_maze_dataset(
     n_train: int = 1000,
     n_test: int = 200,
     extend_dataset: Optional[Path] = None,
+    out_dir: Union[str, Path] = "datasets",
 ):
     def path_distance(
         task_problem_0: TaskProblem,
@@ -89,17 +94,19 @@ def generate_small_maze_dataset(
         extend_dataset=extend_dataset,
     ).generate(n_train=n_train, n_test=n_test, distance_threshold=0.5)
 
-    shutil.rmtree("datasets/maze_small", ignore_errors=True)
+    out_dir = Path(out_dir)
+    out_dir = out_dir / "maze_small"
+    shutil.rmtree(out_dir, ignore_errors=True)
 
     TaskProblemSet(task_problems=train_dataset).save(
-        "datasets/maze_small/train",
+        out_dir / "train",
         MazeBaseStyle,
         subset_sizes=subset_sizes,
         image_width=image_width,
         image_height=image_height,
     )
     TaskProblemSet(task_problems=test_dataset).save(
-        "datasets/maze_small/test",
+        out_dir / "test",
         MazeBaseStyle,
         image_width=image_width,
         image_height=image_height,

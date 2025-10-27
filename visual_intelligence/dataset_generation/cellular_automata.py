@@ -1,6 +1,6 @@
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 
@@ -22,6 +22,7 @@ def generate_cellular_automata_1d_dataset(
     n_train: int = 100,
     n_test: int = 200,
     extend_dataset: Optional[Path] = None,
+    out_dir: Union[str, Path] = "datasets",
 ):
     def ca_hamming_distance(tp0: TaskProblem, tp1: TaskProblem) -> float:
         """Calculate Hamming distance between two cellular automaton grids."""
@@ -48,14 +49,16 @@ def generate_cellular_automata_1d_dataset(
         attempts_multiplier=1000,
     )
 
-    dataset_name = f"cellular_automata_1d_rule{rule}_w{width}_s{steps}"
-    shutil.rmtree(f"datasets/{dataset_name}", ignore_errors=True)
+    out_dir = Path(out_dir)
+    out_dir = out_dir / f"cellular_automata_1d_rule{rule}_w{width}_s{steps}"
+    shutil.rmtree(out_dir, ignore_errors=True)
 
     TaskProblemSet(task_problems=ca_train).save(
-        f"datasets/{dataset_name}/train",
+        out_dir / "train",
         MazeBaseStyle,
         subset_sizes=subset_sizes,
     )
     TaskProblemSet(task_problems=ca_test).save(
-        f"datasets/{dataset_name}/test", MazeBaseStyle
+        out_dir / "test",
+        MazeBaseStyle,
     )

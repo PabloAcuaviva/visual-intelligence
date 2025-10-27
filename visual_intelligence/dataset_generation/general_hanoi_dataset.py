@@ -1,6 +1,6 @@
 import shutil
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal, Optional, Union
 
 import numpy as np
 
@@ -40,6 +40,7 @@ def generate_general_hanoi_dataset(
     image_height: int = 64,
     image_width: int = 320,
     extend_dataset: Optional[Path] = None,
+    out_dir: Union[str, Path] = "datasets",
 ):
     def hamming_distance(tp0: TaskProblem, tp1: TaskProblem) -> float:
         g0 = np.array(tp0.init_grid)
@@ -58,16 +59,19 @@ def generate_general_hanoi_dataset(
         distance_threshold=0.01,
     )
 
-    shutil.rmtree(f"datasets/general_hanoi_step{steps}", ignore_errors=True)
+    out_dir = Path(out_dir)
+    out_dir = out_dir / f"general_hanoi_step{steps}"
+    shutil.rmtree(out_dir, ignore_errors=True)
+
     TaskProblemSet(task_problems=hanoi_train).save(
-        f"datasets/general_hanoi_step{steps}/train",
+        out_dir / "train",
         ArcReducedStyle,
         subset_sizes=subset_sizes,
         image_width=image_width,
         image_height=image_height,
     )
     TaskProblemSet(task_problems=hanoi_test).save(
-        f"datasets/general_hanoi_step{steps}/test",
+        out_dir / "test",
         ArcReducedStyle,
         image_width=image_width,
         image_height=image_height,

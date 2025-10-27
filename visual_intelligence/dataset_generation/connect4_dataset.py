@@ -1,6 +1,6 @@
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 
@@ -21,6 +21,7 @@ def generate_connect4_dataset(
     image_width: int = 240,
     image_height: int = 240,
     extend_dataset: Optional[Path] = None,
+    out_dir: Union[str, Path] = "datasets",
 ):
     def connect4_hamming_distance(tp0: TaskProblem, tp1: TaskProblem) -> float:
         g0 = np.array(tp0.tgt_grid)
@@ -42,16 +43,19 @@ def generate_connect4_dataset(
         distance_threshold=0.25,
     )
 
-    shutil.rmtree("datasets/connect4", ignore_errors=True)
+    out_dir = Path(out_dir)
+    out_dir = out_dir / "connect4"
+    shutil.rmtree(out_dir, ignore_errors=True)
+
     TaskProblemSet(task_problems=connect4_train).save(
-        "datasets/connect4/train",
+        out_dir / "train",
         style,
         image_width=image_width,
         image_height=image_height,
         subset_sizes=subset_sizes,
     )
     TaskProblemSet(task_problems=connect4_test).save(
-        "datasets/connect4/test",
+        out_dir / "test",
         style,
         image_width=image_width,
         image_height=image_height,

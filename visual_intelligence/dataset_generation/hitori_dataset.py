@@ -1,6 +1,6 @@
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 
@@ -20,6 +20,7 @@ def generate_hitori_dataset(
     n_train: int = 100,
     n_test: int = 200,
     extend_dataset: Optional[Path] = None,
+    out_dir: Union[str, Path] = "datasets",
 ):
     def hitori_distance(tp0: TaskProblem, tp1: TaskProblem) -> float:
         g0 = np.array(tp0.init_grid)
@@ -39,17 +40,19 @@ def generate_hitori_dataset(
 
     image_width = image_height = 16 * (orig_size // 16 + (orig_size % 16 != 0))
 
-    out_dir = f"datasets/hitori_{size}_{difficulty}"
+    out_dir = Path(out_dir)
+    out_dir = out_dir / f"hitori_{size}_{difficulty}"
     shutil.rmtree(out_dir, ignore_errors=True)
+
     TaskProblemSet(task_problems=hitori_train).save(
-        f"{out_dir}/train",
+        out_dir / "train",
         style,
         subset_sizes=subset_sizes,
         image_width=image_width,
         image_height=image_height,
     )
     TaskProblemSet(task_problems=hitori_test).save(
-        f"{out_dir}/test",
+        out_dir / "test",
         style,
         image_width=image_width,
         image_height=image_height,

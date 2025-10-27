@@ -1,6 +1,6 @@
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from visual_intelligence.tasks.base import TaskDatasetGenerator, TaskProblem
 from visual_intelligence.tasks.navigation2d import Navigation2D
@@ -17,6 +17,7 @@ def generate_navigation2d_dataset(
     n_train: int = 1000,
     n_test: int = 100,
     extend_dataset: Optional[Path] = None,
+    out_dir: Union[str, Path] = "datasets",
 ):
     def path_distance(
         task_problem_0: TaskProblem,
@@ -51,14 +52,18 @@ def generate_navigation2d_dataset(
         extend_dataset=extend_dataset,
     ).generate(n_train=n_train, n_test=n_test, distance_threshold=0.5)
 
-    shutil.rmtree("datasets/navigation2d", ignore_errors=True)
+    out_dir = Path(out_dir)
+    out_dir = out_dir / "navigation2d"
+    shutil.rmtree(out_dir, ignore_errors=True)
+
     TaskProblemSet(task_problems=train_dataset).save(
-        "datasets/navigation2d/train",
+        out_dir / "train",
         MazeBaseStyle,
         subset_sizes=subset_sizes,
     )
     TaskProblemSet(task_problems=test_dataset).save(
-        "datasets/navigation2d/test", MazeBaseStyle
+        out_dir / "test",
+        MazeBaseStyle,
     )
 
 
@@ -72,6 +77,7 @@ def generate_navigation2d_any_to_any_dataset(
     n_train: int = 1000,
     n_test: int = 200,
     extend_dataset: Optional[Path] = None,
+    out_dir: Union[str, Path] = "datasets",
 ):
     def path_distance(
         task_problem_0: TaskProblem,
@@ -107,15 +113,16 @@ def generate_navigation2d_any_to_any_dataset(
         extend_dataset=extend_dataset,
     ).generate(n_train=n_train, n_test=n_test, distance_threshold=0.5)
 
-    shutil.rmtree(f"datasets/{navigation2d_any_to_any}", ignore_errors=True)
+    out_dir = Path(out_dir)
+    out_dir = out_dir / navigation2d_any_to_any
+    shutil.rmtree(out_dir, ignore_errors=True)
+
     TaskProblemSet(task_problems=train_dataset).save(
-        f"datasets/{navigation2d_any_to_any}/train",
+        out_dir / "train",
         MazeBaseStyle,
         subset_sizes=subset_sizes,
     )
-    TaskProblemSet(task_problems=test_dataset).save(
-        f"datasets/{navigation2d_any_to_any}/test", MazeBaseStyle
-    )
+    TaskProblemSet(task_problems=test_dataset).save(out_dir / "test", MazeBaseStyle)
 
 
 shortest_path = "shortest_path"
@@ -127,6 +134,7 @@ def generate_shortest_path_dataset(
     subset_sizes: Optional[list[int]] = None,
     n_train: int = 1000,
     n_test: int = 100,
+    out_dir: Union[str, Path] = "datasets",
 ):
     def path_distance(
         task_problem_0: TaskProblem,
@@ -161,12 +169,13 @@ def generate_shortest_path_dataset(
         dist_fn=path_distance,
     ).generate(n_train=n_train, n_test=n_test, distance_threshold=0.5)
 
-    shutil.rmtree(f"datasets/{shortest_path}", ignore_errors=True)
+    out_dir = Path(out_dir)
+    out_dir = out_dir / shortest_path
+    shutil.rmtree(out_dir, ignore_errors=True)
+
     TaskProblemSet(task_problems=train_dataset).save(
-        f"datasets/{shortest_path}/train",
+        out_dir / "train",
         MazeBaseStyle,
         subset_sizes=subset_sizes,
     )
-    TaskProblemSet(task_problems=test_dataset).save(
-        f"datasets/{shortest_path}/test", MazeBaseStyle
-    )
+    TaskProblemSet(task_problems=test_dataset).save(out_dir / "test", MazeBaseStyle)

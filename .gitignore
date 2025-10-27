@@ -6,3 +6,4 @@ node_modules/
 *debug*
 /datasets/
 /_deprecated/
+/visual_intelligence.egg-info/

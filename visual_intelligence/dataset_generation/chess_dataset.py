@@ -1,6 +1,6 @@
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 
@@ -23,6 +23,7 @@ def generate_chess_mate_in_n_dataset(
     image_width: int = 272,
     image_height: int = 272,
     extend_dataset: Optional[Path] = None,
+    out_dir: Union[str, Path] = "datasets",
 ):
     def hamming_distance(tp0: TaskProblem, tp1: TaskProblem) -> float:
         g0 = np.array(tp0.tgt_grid)
@@ -45,18 +46,19 @@ def generate_chess_mate_in_n_dataset(
         distance_threshold=0.01,  # Make sure they are at least different scenarios, most of the floor will be the same
     )
 
-    shutil.rmtree(
-        f"datasets/chess_mate_in_{mate_in}_{initial_turn}", ignore_errors=True
-    )
+    out_dir = Path(out_dir)
+    out_dir = out_dir / f"chess_mate_in_{mate_in}_{initial_turn}"
+    shutil.rmtree(out_dir, ignore_errors=True)
+
     TaskProblemSet(task_problems=chess_train).save(
-        f"datasets/chess_mate_in_{mate_in}_{initial_turn}/train",
+        out_dir / "train",
         style,
         image_width=image_width,
         image_height=image_height,
         subset_sizes=subset_sizes,
     )
     TaskProblemSet(task_problems=chess_test).save(
-        f"datasets/chess_mate_in_{mate_in}_{initial_turn}/test",
+        out_dir / "test",
         style,
         image_width=image_width,
         image_height=image_height,

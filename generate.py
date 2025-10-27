@@ -1,7 +1,7 @@
 from visual_intelligence.dataset_generation.registry import DATASET_GENERATORS
 
 if __name__ == "__main__":
-    vdm_datasets_path = "datasets"
+    datasets_path = "datasets/extended-grid-task"
     n_test = 200
     subset_sizes = [3, 5, 10, 30, 50, 100, 300, 500, 1000, 3000, 5000]
 
@@ -17,6 +17,7 @@ if __name__ == "__main__":
             n_train=max(subset_sizes),
             subset_sizes=subset_sizes,
             n_test=n_test,
+            out_dir=datasets_path,
         )
 
         # Sudoku variants
@@ -24,6 +25,7 @@ if __name__ == "__main__":
             n_train=max(subset_sizes),
             subset_sizes=subset_sizes,
             n_test=n_test,
+            out_dir=datasets_path,
         )
 
         DATASET_GENERATORS["sudoku"](
@@ -31,18 +33,21 @@ if __name__ == "__main__":
             n_train=max(subset_sizes),
             subset_sizes=subset_sizes,
             n_test=n_test,
+            out_dir=datasets_path,
         )
 
         DATASET_GENERATORS["connect4"](
             n_train=max(subset_sizes),
             subset_sizes=subset_sizes,
             n_test=n_test,
+            out_dir=datasets_path,
         )
 
         DATASET_GENERATORS["chess_mate_in_n"](
             subset_sizes=[s for s in subset_sizes if s <= 2000],  # Dataset bottleneck
             n_train=max(subset_sizes),
             n_test=n_test,
+            out_dir=datasets_path,
         )
 
     ###
@@ -63,6 +68,7 @@ if __name__ == "__main__":
                     subset_sizes=subset_sizes,
                     n_train=max(subset_sizes),
                     n_test=n_test,
+                    out_dir=datasets_path,
                 )
 
         # Game of Life variants
@@ -84,6 +90,7 @@ if __name__ == "__main__":
                 subset_sizes=subset_sizes,
                 n_test=n_test,
                 distance_threshold=0.25 if gol_variant_name != "Seeds" else 0.15,
+                out_dir=datasets_path,
                 **rules,
             )
 
@@ -94,6 +101,7 @@ if __name__ == "__main__":
                 subset_sizes=subset_sizes,
                 n_train=max(subset_sizes),
                 n_test=n_test,
+                out_dir=datasets_path,
             )
 
     ###
@@ -104,14 +112,17 @@ if __name__ == "__main__":
             n_train=max(subset_sizes),
             subset_sizes=subset_sizes,
             n_test=n_test,
+            out_dir=datasets_path,
         )
         DATASET_GENERATORS["maze_small"](
             n_train=max(subset_sizes),
             subset_sizes=subset_sizes,
             n_test=0,
+            out_dir=datasets_path,
         )
         DATASET_GENERATORS["maze"](
             n_train=max(subset_sizes),
             subset_sizes=subset_sizes,
             n_test=n_test,
+            out_dir=datasets_path,
         )

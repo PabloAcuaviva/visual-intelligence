@@ -1,6 +1,6 @@
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 
@@ -26,6 +26,7 @@ def generate_gol_dataset(
     survival_rule: list[int] | None = None,
     birth_rule: list[int] | None = None,
     distance_threshold: float = 0.1,
+    out_dir: Union[str, Path] = "datasets",
 ):
     def gol_hamming_distance(tp0: TaskProblem, tp1: TaskProblem) -> float:
         g0 = np.array(tp0.tgt_grid)
@@ -54,16 +55,19 @@ def generate_gol_dataset(
         attempts_multiplier=500,
     )
 
-    shutil.rmtree(f"datasets/{gol_variant_name}_step{steps}", ignore_errors=True)
+    out_dir = Path(out_dir)
+    out_dir = out_dir / f"{gol_variant_name}_step{steps}"
+    shutil.rmtree(out_dir, ignore_errors=True)
+
     TaskProblemSet(task_problems=gol_train).save(
-        f"datasets/{gol_variant_name}_step{steps}/train",
+        out_dir / "train",
         style,
         subset_sizes=subset_sizes,
         image_width=image_width,
         image_height=image_height,
     )
     TaskProblemSet(task_problems=gol_test).save(
-        f"datasets/{gol_variant_name}_step{steps}/test",
+        out_dir / "test",
         style,
         image_width=image_width,
         image_height=image_height,

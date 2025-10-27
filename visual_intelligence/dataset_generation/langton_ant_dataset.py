@@ -1,6 +1,6 @@
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 
@@ -19,6 +19,7 @@ def generate_langton_ant_dataset(
     n_train: int = 100,
     n_test: int = 200,
     extend_dataset: Optional[Path] = None,
+    out_dir: Union[str, Path] = "datasets",
 ):
     def ant_hamming_distance(tp0: TaskProblem, tp1: TaskProblem) -> float:
         g0 = np.array(tp0.tgt_grid)
@@ -41,12 +42,16 @@ def generate_langton_ant_dataset(
         extend_dataset=extend_dataset,
     ).generate(n_train=n_train, n_test=n_test, distance_threshold=0.3)
 
-    shutil.rmtree(f"datasets/langton_ant_step{steps}", ignore_errors=True)
+    out_dir = Path(out_dir)
+    out_dir = out_dir / f"langton_ant_step{steps}"
+    shutil.rmtree(out_dir, ignore_errors=True)
+
     TaskProblemSet(task_problems=ant_train).save(
-        f"datasets/langton_ant_step{steps}/train",
+        out_dir / "train",
         MazeBaseStyle,
         subset_sizes=subset_sizes,
     )
     TaskProblemSet(task_problems=ant_test).save(
-        f"datasets/langton_ant_step{steps}/test", MazeBaseStyle
+        out_dir / "test",
+        MazeBaseStyle,
     )
