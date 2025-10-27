@@ -1,7 +1,7 @@
 from visual_intelligence.dataset_generation.registry import DATASET_GENERATORS
 
 if __name__ == "__main__":
-    datasets_path = "datasets/extended-grid-task"
+    datasets_path = "datasets/extended-data"
     n_test = 200
     subset_sizes = [3, 5, 10, 30, 50, 100, 300, 500, 1000, 3000, 5000]
 

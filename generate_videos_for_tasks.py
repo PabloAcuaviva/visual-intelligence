@@ -42,7 +42,7 @@ if __name__ == "__main__":
                                 / f"{img_path.stem}.mp4",
                             )
 
-    dataset_folder = dataset_folder / "extended-grid-task"
+    dataset_folder = dataset_folder / "extended-data"
     prepare_videos_for_task_folder = []
     if generate_videos_for_games:
         game_names = ["hitori", "sudoku", "connect4", "chess"]

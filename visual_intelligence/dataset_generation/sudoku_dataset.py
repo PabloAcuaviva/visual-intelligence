@@ -38,7 +38,7 @@ def generate_sudoku_dataset(
     image_width = image_height = 16 * (19 if variant == "standard" else 9)
 
     out_dir = Path(out_dir)
-    out_dir = out_dir / f"datasets/sudoku_{variant}_{difficulty}"
+    out_dir = out_dir / f"sudoku_{variant}_{difficulty}"
     shutil.rmtree(out_dir, ignore_errors=True)
 
     TaskProblemSet(task_problems=sudoku_train).save(
