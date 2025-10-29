@@ -52,7 +52,7 @@ Finetuning Video Diffusion Models (VDMs) requires preparing datasets in video fo
 * **Wan2.1:** For finetuning, we recommend using either [VideoX-Fun](https://github.com/aigc-apps/VideoX-Fun) (used in our experiments) or [DiffSynth-Studio](https://github.com/modelscope/DiffSynth-Studio), both of which provide compatible and well-maintained finetuning pipelines.
 
 * **LTX:** Follow the official implementation for finetuning and dataset preparation.  
-  Repository: [LTX](https://github.com/Lightricks/LTX-Video)
+  Repository: [LTX-Video-Trainer](https://github.com/Lightricks/LTX-Video-Trainer)
 
 
 ## Contributing
