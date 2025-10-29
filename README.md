@@ -26,15 +26,38 @@ python3 generate_arc.py
 python3 generate.py
 ```
 
-3. _(Optional)_ To generate training videos for VDM models, run:
+3. To generate training videos for VDM models, run:
 
 ```bash
 python3 generate_videos_for_tasks.py
 ```
 
+## Finetuning Models
+
+### Finetuning LLMs
+See the companion repository for instructions: [llm visual intelligence](https://github.com/PabloAcuaviva/llm-visual-intelligence).
+
+### Finetuning VDMs
+
+Finetuning Video Diffusion Models (VDMs) requires preparing datasets in video format and leveraging the training utilities provided by the respective base model repositories.
+
+**Supported base models and references**
+
+* **CogVideoX 1.5:** Experimental code is provided in [CogVideoX1.5 Experimental](https://github.com/PabloAcuaviva/visual-intelligence-cog-video)`.  
+  Upstream repository: [CogVideoX](https://github.com/zai-org/CogVideo)  
+> ⚠️ **Warning:**  
+> The experimental code provided here is primarily for reference. It was used during experiments and includes additional functionality and unfinished features that did not make it into the paper. It has not been cleaned or documented and is **NOT RECOMMENDED for general use**.  
+> For practical finetuning, please use the official [CogVideoX Repository](https://github.com/zai-org/CogVideo).
+
+* **Wan2.1:** For finetuning, we recommend using either [VideoX-Fun](https://github.com/aigc-apps/VideoX-Fun) (used in our experiments) or [DiffSynth-Studio](https://github.com/modelscope/DiffSynth-Studio), both of which provide compatible and well-maintained finetuning pipelines.
+
+* **LTX:** Follow the official implementation for finetuning and dataset preparation.  
+  Repository: [LTX](https://github.com/Lightricks/LTX-Video)
+
+
 ## Contributing
 
-We use pre-commit to maintain consistent code style.
+We use pre-commit to maintain a consistent code style.
 Install and run it as follows:
 
 ```bash
