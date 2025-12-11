@@ -207,3 +207,119 @@ def process_arc_like_folder(
             image_height=image_height,
             image_width=image_width,
         )
+
+
+def process_arc_like_iterator(
+    dataset_iterator,
+    output_path: Path,
+    same_cell_size_all_problems: bool = False,
+    task_name_key: str = "task_id",  # Key to use for naming output folders
+) -> None:
+    """
+    Given an iterator yielding dictionaries with 'train', 'test', and metadata keys,
+    process them into task problems.
+
+    Parameters:
+        dataset_iterator: Iterator yielding dicts with at minimum 'train' and 'test' keys
+        output_path: Directory where processed tasks will be saved
+        same_cell_size_all_problems: If True, use fixed cell size for all problems
+        task_name_key: Key in the dict to use for naming the output folder (default: 'task_id')
+    """
+    render_style = RenderStyle(
+        cell_size=11,
+        grid_border_size=2,
+        value_to_color={
+            0: (0, 0, 0),  # Black
+            1: (0, 116, 217),  # Blue
+            2: (255, 65, 54),  # Red
+            3: (46, 204, 64),  # Green
+            4: (255, 220, 0),  # Yellow
+            5: (170, 170, 170),  # Grey
+            6: (240, 18, 190),  # Fuchsia
+            7: (255, 133, 27),  # Orange
+            8: (127, 219, 255),  # Teal
+            9: (135, 12, 37),  # Brown
+        },
+        background_color=(0, 0, 0),
+        border_color=(85, 85, 85),
+    )
+    image_width = image_height = 400
+
+    output_path.mkdir(exist_ok=True, parents=True)
+
+    for idx, example_and_metadata in enumerate(tqdm(dataset_iterator)):
+        # Extract train and test data
+        train_data = example_and_metadata.get("train", [])
+        test_data = example_and_metadata.get("test", [])
+
+        # Extract all metadata (everything that's not 'train' or 'test')
+        task_metadata = {
+            k: v for k, v in example_and_metadata.items() if k not in ["train", "test"]
+        }
+
+        # Determine task name for output folder
+        task_name = example_and_metadata.get(task_name_key, f"task_{idx}")
+
+        # Convert to TaskProblems
+        train_problems = [
+            TaskProblem(
+                init_grid=arc_problem["input"],
+                tgt_grid=arc_problem["output"],
+                task_specific_metadata=dict(
+                    query_or_support="support",
+                    problem_num=i,
+                    **task_metadata,
+                ),
+            )
+            for i, arc_problem in enumerate(train_data)
+        ]
+
+        test_problems = [
+            TaskProblem(
+                init_grid=arc_problem["input"],
+                tgt_grid=arc_problem["output"],
+                task_specific_metadata=dict(
+                    query_or_support="query",
+                    problem_num=i,
+                    **task_metadata,
+                ),
+            )
+            for i, arc_problem in enumerate(test_data)
+        ]
+
+        train_problem_set = TaskProblemSet(train_problems)
+        test_problem_set = TaskProblemSet(test_problems)
+
+        problem_render_style = deepcopy(render_style)
+
+        if not same_cell_size_all_problems:
+            try:
+                problem_render_style.cell_size = calculate_cell_size(
+                    image_height,
+                    image_width,
+                    *[p.init_grid for p in train_problems],
+                    *[p.tgt_grid for p in train_problems],
+                    *[p.init_grid for p in test_problems],
+                    *[p.tgt_grid for p in test_problems],
+                    default_min_cell_size=render_style.cell_size,
+                    grid_border_size=render_style.grid_border_size,
+                )
+            except ValueError as e:
+                print(
+                    f"Couldn't save task {task_name} as cells would be too small!\n{e}"
+                )
+                continue
+
+        # Save train and test problems
+        train_problem_set.save(
+            path_dir=output_path / task_name / "train",
+            render_style=problem_render_style,
+            image_height=image_height,
+            image_width=image_width,
+        )
+        test_problem_set.save(
+            path_dir=output_path / task_name / "test",
+            render_style=problem_render_style,
+            image_height=image_height,
+            image_width=image_width,
+        )
