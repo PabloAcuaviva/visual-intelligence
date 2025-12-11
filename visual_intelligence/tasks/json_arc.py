@@ -129,28 +129,31 @@ def process_arc_like_folder(
     output_path: Path,
     nested: bool = True,
     same_cell_size_all_problems: bool = False,
+    render_style: Optional[RenderStyle] = None,
+    image_width: int = 400,
+    image_height: int = 400,
 ) -> None:
     """Given a path containing JSON in ARC-AGI format, process them into task problems."""
     # Notice we fix this to be able to have the same values for all
-    render_style = RenderStyle(
-        cell_size=11,
-        grid_border_size=2,
-        value_to_color={
-            0: (0, 0, 0),  # Black
-            1: (0, 116, 217),  # Blue
-            2: (255, 65, 54),  # Red
-            3: (46, 204, 64),  # Green
-            4: (255, 220, 0),  # Yellow
-            5: (170, 170, 170),  # Grey
-            6: (240, 18, 190),  # Fuchsia
-            7: (255, 133, 27),  # Orange
-            8: (127, 219, 255),  # Teal
-            9: (135, 12, 37),  # Brown
-        },
-        background_color=(0, 0, 0),  # Black background
-        border_color=(85, 85, 85),  # Medium gray border
-    )
-    image_width = image_height = 400  # Adjusted for a maximum 30x30 grid
+    if render_style is None:
+        render_style = RenderStyle(
+            cell_size=11,
+            grid_border_size=2,
+            value_to_color={
+                0: (0, 0, 0),  # Black
+                1: (0, 116, 217),  # Blue
+                2: (255, 65, 54),  # Red
+                3: (46, 204, 64),  # Green
+                4: (255, 220, 0),  # Yellow
+                5: (170, 170, 170),  # Grey
+                6: (240, 18, 190),  # Fuchsia
+                7: (255, 133, 27),  # Orange
+                8: (127, 219, 255),  # Teal
+                9: (135, 12, 37),  # Brown
+            },
+            background_color=(0, 0, 0),  # Black background
+            border_color=(85, 85, 85),  # Medium gray border
+        )
 
     files = list(input_path.iterdir())
     output_path.mkdir(exist_ok=True, parents=True)
@@ -214,6 +217,9 @@ def process_arc_like_iterator(
     output_path: Path,
     same_cell_size_all_problems: bool = False,
     task_name_key: str = "task_id",  # Key to use for naming output folders
+    render_style: Optional[RenderStyle] = None,
+    image_width: int = 400,
+    image_height: int = 400,
 ) -> None:
     """
     Given an iterator yielding dictionaries with 'train', 'test', and metadata keys,
@@ -225,25 +231,25 @@ def process_arc_like_iterator(
         same_cell_size_all_problems: If True, use fixed cell size for all problems
         task_name_key: Key in the dict to use for naming the output folder (default: 'task_id')
     """
-    render_style = RenderStyle(
-        cell_size=11,
-        grid_border_size=2,
-        value_to_color={
-            0: (0, 0, 0),  # Black
-            1: (0, 116, 217),  # Blue
-            2: (255, 65, 54),  # Red
-            3: (46, 204, 64),  # Green
-            4: (255, 220, 0),  # Yellow
-            5: (170, 170, 170),  # Grey
-            6: (240, 18, 190),  # Fuchsia
-            7: (255, 133, 27),  # Orange
-            8: (127, 219, 255),  # Teal
-            9: (135, 12, 37),  # Brown
-        },
-        background_color=(0, 0, 0),
-        border_color=(85, 85, 85),
-    )
-    image_width = image_height = 400
+    if render_style is None:
+        render_style = RenderStyle(
+            cell_size=11,
+            grid_border_size=2,
+            value_to_color={
+                0: (0, 0, 0),  # Black
+                1: (0, 116, 217),  # Blue
+                2: (255, 65, 54),  # Red
+                3: (46, 204, 64),  # Green
+                4: (255, 220, 0),  # Yellow
+                5: (170, 170, 170),  # Grey
+                6: (240, 18, 190),  # Fuchsia
+                7: (255, 133, 27),  # Orange
+                8: (127, 219, 255),  # Teal
+                9: (135, 12, 37),  # Brown
+            },
+            background_color=(0, 0, 0),
+            border_color=(85, 85, 85),
+        )
 
     output_path.mkdir(exist_ok=True, parents=True)
 
