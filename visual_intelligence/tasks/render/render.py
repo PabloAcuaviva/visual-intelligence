@@ -123,7 +123,7 @@ def render(
 def _parse_from_np_image(
     np_image: np.ndarray, render_metadata: RenderMetadata, render_style: RenderStyle
 ) -> tuple[Grid, list[list[tuple[int, int, int]]], float]:
-    # This loop be paralelized with numpy, but is more than fast enough in this way.
+    # This loop can be paralelized with numpy, but is more than fast enough in this way.
 
     ###
     # Extract values for parsing
