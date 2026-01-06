@@ -1,74 +1,49 @@
-import shutil
-from pathlib import Path
-from typing import Optional, Union
+from dataclasses import dataclass
+from typing import Optional
 
-import numpy as np
-
-from visual_intelligence.tasks.base import TaskDatasetGenerator, TaskProblem
 from visual_intelligence.tasks.game_of_life import GameOfLife
-from visual_intelligence.tasks.problem_set import TaskProblemSet
-from visual_intelligence.tasks.render.schemas import ArcBaseStyle
 
+from .base import BaseDatasetGenerator
 from .registry import register_dataset
 
 
-@register_dataset("gol")
-def generate_gol_dataset(
-    steps: int = 1,
-    gol_variant_name: str = "gol",
-    subset_sizes: Optional[list[int]] = None,
-    n_train=100,
-    n_test=200,
-    style=ArcBaseStyle,
-    image_width: int = 17 * 16,
-    image_height: int = 17 * 16,
-    extend_dataset: Optional[Path] = None,
-    survival_rule: list[int] | None = None,
-    birth_rule: list[int] | None = None,
-    distance_threshold: float = 0.1,
-    out_dir: Union[str, Path] = "datasets",
-):
-    def gol_hamming_distance(tp0: TaskProblem, tp1: TaskProblem) -> float:
-        g0 = np.array(tp0.tgt_grid)
-        g1 = np.array(tp1.tgt_grid)
-        if g0.shape != g1.shape:
-            raise ValueError("Grid shapes do not match")
-        return np.sum(g0 != g1) / g0.size
+@dataclass(kw_only=True)
+class GameOfLifeDatasetGenerator(BaseDatasetGenerator):
+    """Game of Life dataset generator."""
 
-    gol_train, gol_test = TaskDatasetGenerator(
-        task=GameOfLife(
-            width=8,
-            height=8,
-            steps=steps,
+    # Task-specific params
+    steps: int = 1
+    gol_variant_name: str = "gol"
+    width: int = 8
+    height: int = 8
+    density: float = 0.4
+    survival_rule: Optional[list[int]] = None
+    birth_rule: Optional[list[int]] = None
+
+    # Override defaults
+    image_width: int = 17 * 16
+    image_height: int = 17 * 16
+    distance_metric: str = "hamming_tgt"
+    distance_threshold: float = 0.1
+    attempts_multiplier: int = 500
+
+    def create_task(self) -> GameOfLife:
+        return GameOfLife(
+            width=self.width,
+            height=self.height,
+            steps=self.steps,
             initialization="random",
-            density=0.4,
+            density=self.density,
             seed=42,
-            survival_rule=survival_rule,
-            birth_rule=birth_rule,
-        ),
-        dist_fn=gol_hamming_distance,
-        extend_dataset=extend_dataset,
-    ).generate(
-        n_train=n_train,
-        n_test=n_test,
-        distance_threshold=distance_threshold,
-        attempts_multiplier=500,
-    )
+            survival_rule=self.survival_rule,
+            birth_rule=self.birth_rule,
+        )
 
-    out_dir = Path(out_dir)
-    out_dir = out_dir / f"{gol_variant_name}_step{steps}"
-    shutil.rmtree(out_dir, ignore_errors=True)
+    @property
+    def dataset_name(self) -> str:
+        return f"{self.gol_variant_name}_step{self.steps}"
 
-    TaskProblemSet(task_problems=gol_train).save(
-        out_dir / "train",
-        style,
-        subset_sizes=subset_sizes,
-        image_width=image_width,
-        image_height=image_height,
-    )
-    TaskProblemSet(task_problems=gol_test).save(
-        out_dir / "test",
-        style,
-        image_width=image_width,
-        image_height=image_height,
-    )
+
+@register_dataset("gol")
+def generate_gol_dataset(**kwargs):
+    GameOfLifeDatasetGenerator(**kwargs).generate()

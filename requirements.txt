@@ -1,5 +1,6 @@
 annotated-types==0.7.0
 cairocffi==1.7.1
+datasets>=2.0.0
 CairoSVG==2.8.2
 certifi==2025.10.5
 cffi==2.0.0

@@ -1,65 +1,39 @@
-import shutil
-from pathlib import Path
-from typing import Optional, Union
+from dataclasses import dataclass
 
-import numpy as np
-
-from visual_intelligence.tasks.base import TaskDatasetGenerator, TaskProblem
 from visual_intelligence.tasks.chess_mate_in_n import ChessMate
-from visual_intelligence.tasks.problem_set import TaskProblemSet
-from visual_intelligence.tasks.render.schemas import ArcExtendedStyle
 
+from .base import BaseDatasetGenerator
 from .registry import register_dataset
 
 
+@dataclass(kw_only=True)
+class ChessMateDatasetGenerator(BaseDatasetGenerator):
+    """Chess mate-in-N dataset generator."""
+
+    # Task-specific params
+    mate_in: int = 1
+    initial_turn: str = "w"
+
+    # Override defaults
+    style: str = "arc_extended"
+    image_width: int = 272
+    image_height: int = 272
+    distance_metric: str = "hamming_tgt"
+    distance_threshold: float = 0.01
+    attempts_multiplier: int = 100
+
+    def create_task(self) -> ChessMate:
+        return ChessMate(
+            mate_in=self.mate_in,
+            initial_turn=self.initial_turn,
+            generate_sequential=True,
+        )
+
+    @property
+    def dataset_name(self) -> str:
+        return f"chess_mate_in_{self.mate_in}_{self.initial_turn}"
+
+
 @register_dataset("chess_mate_in_n")
-def generate_chess_mate_in_n_dataset(
-    subset_sizes: Optional[list[int]] = None,
-    n_train: int = 100,
-    n_test: int = 200,
-    mate_in: int = 1,
-    initial_turn: str = "w",
-    style=ArcExtendedStyle,
-    image_width: int = 272,
-    image_height: int = 272,
-    extend_dataset: Optional[Path] = None,
-    out_dir: Union[str, Path] = "datasets",
-):
-    def hamming_distance(tp0: TaskProblem, tp1: TaskProblem) -> float:
-        g0 = np.array(tp0.tgt_grid)
-        g1 = np.array(tp1.tgt_grid)
-        if g0.shape != g1.shape:
-            raise ValueError("Grid shapes do not match")
-        return np.sum(g0 != g1) / g0.size
-
-    subset_sizes = subset_sizes
-
-    chess_train, chess_test = TaskDatasetGenerator(
-        task=ChessMate(
-            mate_in=mate_in, initial_turn=initial_turn, generate_sequential=True
-        ),
-        dist_fn=hamming_distance,
-    ).generate(
-        n_train=n_train,
-        n_test=n_test,
-        attempts_multiplier=100,
-        distance_threshold=0.01,  # Make sure they are at least different scenarios, most of the floor will be the same
-    )
-
-    out_dir = Path(out_dir)
-    out_dir = out_dir / f"chess_mate_in_{mate_in}_{initial_turn}"
-    shutil.rmtree(out_dir, ignore_errors=True)
-
-    TaskProblemSet(task_problems=chess_train).save(
-        out_dir / "train",
-        style,
-        image_width=image_width,
-        image_height=image_height,
-        subset_sizes=subset_sizes,
-    )
-    TaskProblemSet(task_problems=chess_test).save(
-        out_dir / "test",
-        style,
-        image_width=image_width,
-        image_height=image_height,
-    )
+def generate_chess_mate_in_n_dataset(**kwargs):
+    ChessMateDatasetGenerator(**kwargs).generate()

@@ -1,181 +1,120 @@
-import shutil
-from pathlib import Path
-from typing import Optional, Union
+from dataclasses import dataclass
+from typing import Optional, Tuple
 
-from visual_intelligence.tasks.base import TaskDatasetGenerator, TaskProblem
 from visual_intelligence.tasks.navigation2d import Navigation2D
-from visual_intelligence.tasks.problem_set import TaskProblemSet
-from visual_intelligence.tasks.render.schemas import MazeBaseStyle
 
+from .base import BaseDatasetGenerator
 from .registry import register_dataset
 
 
+@dataclass(kw_only=True)
+class Navigation2DDatasetGenerator(BaseDatasetGenerator):
+    """Navigation 2D dataset generator."""
+
+    width: int = 21
+    height: int = 21
+    obstacle_density: float = 0.08
+    n_barriers: int = 8
+    barrier_holes_range: Tuple[int, int] = (3, 5)
+    n_blocks: Tuple[int, int] = (1, 4)
+    block_size_range: Tuple[int, int] = (2, 3)
+    max_attempts: int = 4000
+    valid_starts: Optional[Tuple[int, int]] = (1, 1)
+    valid_ends: Optional[Tuple[int, int]] = None
+    min_manhattan_distance: Optional[int] = None
+
+    n_train: int = 1000
+    n_test: int = 100
+    style: str = "maze"
+    distance_metric: str = "jaccard_path"
+    distance_threshold: float = 0.5
+
+    def __post_init__(self):
+        if self.valid_ends is None:
+            self.valid_ends = (self.width - 2, self.height - 2)
+
+    def create_task(self) -> Navigation2D:
+        generate_intermediate_states = (
+            self.video is not None and self.video.frames_per_intermediate > 0
+        )
+        return Navigation2D(
+            width=self.width,
+            height=self.height,
+            obstacle_density=self.obstacle_density,
+            seed=42,
+            add_border=True,
+            valid_starts=self.valid_starts,
+            valid_ends=self.valid_ends,
+            n_barriers=self.n_barriers,
+            barrier_holes_range=self.barrier_holes_range,
+            n_blocks=self.n_blocks,
+            block_size_range=self.block_size_range,
+            generate_intermediate_states=generate_intermediate_states,
+            max_attempts=self.max_attempts,
+            min_manhattan_distance=self.min_manhattan_distance,
+        )
+
+    @property
+    def dataset_name(self) -> str:
+        return "navigation2d"
+
+
+@dataclass(kw_only=True)
+class Navigation2DAnyToAnyDatasetGenerator(Navigation2DDatasetGenerator):
+    """Navigation 2D any-to-any dataset generator."""
+
+    width: int = 15
+    height: int = 15
+    obstacle_density: float = 0.05
+    n_barriers: int = 3
+    barrier_holes_range: Tuple[int, int] = (8, 14)
+    n_blocks: Tuple[int, int] = (3, 8)
+    valid_starts: Optional[Tuple[int, int]] = None
+    valid_ends: Optional[Tuple[int, int]] = None
+    min_manhattan_distance: int = 15
+
+    n_test: int = 200
+
+    def __post_init__(self):
+        pass
+
+    @property
+    def dataset_name(self) -> str:
+        return "navigation2d_any_to_any"
+
+
+@dataclass(kw_only=True)
+class ShortestPathDatasetGenerator(Navigation2DDatasetGenerator):
+    """Shortest path dataset generator."""
+
+    width: int = 15
+    height: int = 15
+    obstacle_density: float = 0.05
+    n_barriers: int = 0
+    n_blocks: Tuple[int, int] = (3, 8)
+    block_size_range: Tuple[int, int] = (2, 5)
+    valid_starts: Optional[Tuple[int, int]] = None
+    valid_ends: Optional[Tuple[int, int]] = None
+    min_manhattan_distance: int = 16
+
+    def __post_init__(self):
+        pass
+
+    @property
+    def dataset_name(self) -> str:
+        return "shortest_path"
+
+
 @register_dataset("navigation2d")
-def generate_navigation2d_dataset(
-    generate_intermediate_states: bool = False,
-    subset_sizes: Optional[list[int]] = None,
-    n_train: int = 1000,
-    n_test: int = 100,
-    extend_dataset: Optional[Path] = None,
-    out_dir: Union[str, Path] = "datasets",
-):
-    def path_distance(
-        task_problem_0: TaskProblem,
-        task_problem_1: TaskProblem,
-    ) -> float:
-        path0 = set(task_problem_0.task_specific_metadata["path"])
-        path1 = set(task_problem_1.task_specific_metadata["path"])
-        if len(path0) == 0 and len(path1) == 0:
-            raise ValueError("Both paths are empty")
-        intersection = len(path0.intersection(path1))
-        union = len(path0.union(path1))
-        jaccard_similarity = intersection / union
-        return 1.0 - jaccard_similarity
-
-    train_dataset, test_dataset = TaskDatasetGenerator(
-        task=Navigation2D(
-            width=21,
-            height=21,
-            obstacle_density=0.08,
-            seed=42,
-            add_border=True,
-            valid_starts=(1, 1),
-            valid_ends=(19, 19),
-            n_barriers=8,
-            barrier_holes_range=(3, 5),
-            n_blocks=(1, 4),
-            block_size_range=(2, 3),
-            generate_intermediate_states=generate_intermediate_states,
-            max_attempts=4000,
-        ),
-        dist_fn=path_distance,
-        extend_dataset=extend_dataset,
-    ).generate(n_train=n_train, n_test=n_test, distance_threshold=0.5)
-
-    out_dir = Path(out_dir)
-    out_dir = out_dir / "navigation2d"
-    shutil.rmtree(out_dir, ignore_errors=True)
-
-    TaskProblemSet(task_problems=train_dataset).save(
-        out_dir / "train",
-        MazeBaseStyle,
-        subset_sizes=subset_sizes,
-    )
-    TaskProblemSet(task_problems=test_dataset).save(
-        out_dir / "test",
-        MazeBaseStyle,
-    )
+def generate_navigation2d_dataset(**kwargs):
+    Navigation2DDatasetGenerator(**kwargs).generate()
 
 
-navigation2d_any_to_any = "navigation2d_any_to_any"
+@register_dataset("navigation2d_any_to_any")
+def generate_navigation2d_any_to_any_dataset(**kwargs):
+    Navigation2DAnyToAnyDatasetGenerator(**kwargs).generate()
 
 
-@register_dataset(navigation2d_any_to_any)
-def generate_navigation2d_any_to_any_dataset(
-    generate_intermediate_states: bool = False,
-    subset_sizes: Optional[list[int]] = None,
-    n_train: int = 1000,
-    n_test: int = 200,
-    extend_dataset: Optional[Path] = None,
-    out_dir: Union[str, Path] = "datasets",
-):
-    def path_distance(
-        task_problem_0: TaskProblem,
-        task_problem_1: TaskProblem,
-    ) -> float:
-        path0 = set([tuple(t) for t in task_problem_0.task_specific_metadata["path"]])
-        path1 = set([tuple(t) for t in task_problem_1.task_specific_metadata["path"]])
-        if len(path0) == 0 and len(path1) == 0:
-            raise ValueError("Both paths are empty")
-        intersection = len(path0.intersection(path1))
-        union = len(path0.union(path1))
-        jaccard_similarity = intersection / union
-        return 1.0 - jaccard_similarity
-
-    train_dataset, test_dataset = TaskDatasetGenerator(
-        task=Navigation2D(
-            width=15,
-            height=15,
-            obstacle_density=0.05,
-            seed=42,
-            add_border=True,
-            valid_starts=None,
-            valid_ends=None,
-            n_barriers=3,
-            barrier_holes_range=(8, 14),
-            n_blocks=(3, 8),
-            block_size_range=(2, 3),
-            generate_intermediate_states=generate_intermediate_states,
-            max_attempts=4000,
-            min_manhattan_distance=15,  # Ensure a minimum distance between start and end points
-        ),
-        dist_fn=path_distance,
-        extend_dataset=extend_dataset,
-    ).generate(n_train=n_train, n_test=n_test, distance_threshold=0.5)
-
-    out_dir = Path(out_dir)
-    out_dir = out_dir / navigation2d_any_to_any
-    shutil.rmtree(out_dir, ignore_errors=True)
-
-    TaskProblemSet(task_problems=train_dataset).save(
-        out_dir / "train",
-        MazeBaseStyle,
-        subset_sizes=subset_sizes,
-    )
-    TaskProblemSet(task_problems=test_dataset).save(out_dir / "test", MazeBaseStyle)
-
-
-shortest_path = "shortest_path"
-
-
-@register_dataset(shortest_path)
-def generate_shortest_path_dataset(
-    generate_intermediate_states: bool = False,
-    subset_sizes: Optional[list[int]] = None,
-    n_train: int = 1000,
-    n_test: int = 100,
-    out_dir: Union[str, Path] = "datasets",
-):
-    def path_distance(
-        task_problem_0: TaskProblem,
-        task_problem_1: TaskProblem,
-    ) -> float:
-        path0 = set(task_problem_0.task_specific_metadata["path"])
-        path1 = set(task_problem_1.task_specific_metadata["path"])
-        if len(path0) == 0 and len(path1) == 0:
-            raise ValueError("Both paths are empty")
-        intersection = len(path0.intersection(path1))
-        union = len(path0.union(path1))
-        jaccard_similarity = intersection / union
-        return 1.0 - jaccard_similarity
-
-    train_dataset, test_dataset = TaskDatasetGenerator(
-        task=Navigation2D(
-            width=15,
-            height=15,
-            obstacle_density=0.05,
-            seed=42,
-            add_border=True,
-            valid_starts=None,
-            valid_ends=None,
-            n_barriers=0,
-            barrier_holes_range=(3, 5),
-            n_blocks=(3, 8),
-            block_size_range=(2, 5),
-            generate_intermediate_states=generate_intermediate_states,
-            max_attempts=4000,
-            min_manhattan_distance=16,  # Ensure a minimum distance between start and end points
-        ),
-        dist_fn=path_distance,
-    ).generate(n_train=n_train, n_test=n_test, distance_threshold=0.5)
-
-    out_dir = Path(out_dir)
-    out_dir = out_dir / shortest_path
-    shutil.rmtree(out_dir, ignore_errors=True)
-
-    TaskProblemSet(task_problems=train_dataset).save(
-        out_dir / "train",
-        MazeBaseStyle,
-        subset_sizes=subset_sizes,
-    )
-    TaskProblemSet(task_problems=test_dataset).save(out_dir / "test", MazeBaseStyle)
+@register_dataset("shortest_path")
+def generate_shortest_path_dataset(**kwargs):
+    ShortestPathDatasetGenerator(**kwargs).generate()

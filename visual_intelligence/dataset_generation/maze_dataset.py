@@ -1,113 +1,60 @@
-import shutil
-from pathlib import Path
-from typing import Optional, Union
+from dataclasses import dataclass
 
-from visual_intelligence.tasks.base import TaskDatasetGenerator, TaskProblem
 from visual_intelligence.tasks.maze import Maze
-from visual_intelligence.tasks.problem_set import TaskProblemSet
-from visual_intelligence.tasks.render.schemas import MazeBaseStyle
 
+from .base import BaseDatasetGenerator
 from .registry import register_dataset
 
 
-@register_dataset("maze")
-def generate_maze_dataset(
-    generate_intermediate_states: bool = False,
-    subset_sizes: Optional[list[int]] = None,
-    n_train: int = 1000,
-    n_test: int = 200,
-    extend_dataset: Optional[Path] = None,
-    out_dir: Union[str, Path] = "datasets",
-):
-    def path_distance(
-        task_problem_0: TaskProblem,
-        task_problem_1: TaskProblem,
-    ) -> float:
-        path0 = set([tuple(t) for t in task_problem_0.task_specific_metadata["path"]])
-        path1 = set([tuple(t) for t in task_problem_1.task_specific_metadata["path"]])
-        if len(path0) == 0 and len(path1) == 0:
-            raise ValueError("Both paths are empty")
-        intersection = len(path0.intersection(path1))
-        union = len(path0.union(path1))
-        jaccard_similarity = intersection / union
-        return 1.0 - jaccard_similarity
+@dataclass(kw_only=True)
+class MazeDatasetGenerator(BaseDatasetGenerator):
+    """Maze dataset generator."""
 
-    train_dataset, test_dataset = TaskDatasetGenerator(
-        task=Maze(
-            width=21,
-            height=21,
+    width: int = 21
+    height: int = 21
+
+    n_train: int = 1000
+    style: str = "maze"
+    distance_metric: str = "jaccard_path"
+    distance_threshold: float = 0.5
+
+    def create_task(self) -> Maze:
+        generate_intermediate_states = (
+            self.video is not None and self.video.frames_per_intermediate > 0
+        )
+        return Maze(
+            width=self.width,
+            height=self.height,
             seed=1,
             valid_starts=(1, 1),
-            valid_ends=(19, 19),
+            valid_ends=(self.width - 2, self.height - 2),
             generate_intermediate_states=generate_intermediate_states,
-        ),
-        dist_fn=path_distance,
-        extend_dataset=extend_dataset,
-    ).generate(n_train=n_train, n_test=n_test, distance_threshold=0.5)
+        )
 
-    out_dir = Path(out_dir)
-    out_dir = out_dir / "maze"
-    shutil.rmtree(out_dir, ignore_errors=True)
+    @property
+    def dataset_name(self) -> str:
+        return "maze"
 
-    TaskProblemSet(task_problems=train_dataset).save(
-        out_dir / "train",
-        MazeBaseStyle,
-        subset_sizes=subset_sizes or [],
-    )
-    TaskProblemSet(task_problems=test_dataset).save(out_dir / "test", MazeBaseStyle)
+
+@dataclass(kw_only=True)
+class SmallMazeDatasetGenerator(MazeDatasetGenerator):
+    """Small maze dataset generator."""
+
+    width: int = 13
+    height: int = 13
+    image_width: int = 336
+    image_height: int = 336
+
+    @property
+    def dataset_name(self) -> str:
+        return "maze_small"
+
+
+@register_dataset("maze")
+def generate_maze_dataset(**kwargs):
+    MazeDatasetGenerator(**kwargs).generate()
 
 
 @register_dataset("maze_small")
-def generate_small_maze_dataset(
-    generate_intermediate_states: bool = False,
-    subset_sizes: Optional[list[int]] = None,
-    n_train: int = 1000,
-    n_test: int = 200,
-    extend_dataset: Optional[Path] = None,
-    out_dir: Union[str, Path] = "datasets",
-):
-    def path_distance(
-        task_problem_0: TaskProblem,
-        task_problem_1: TaskProblem,
-    ) -> float:
-        path0 = set([tuple(t) for t in task_problem_0.task_specific_metadata["path"]])
-        path1 = set([tuple(t) for t in task_problem_1.task_specific_metadata["path"]])
-        if len(path0) == 0 and len(path1) == 0:
-            raise ValueError("Both paths are empty")
-        intersection = len(path0.intersection(path1))
-        union = len(path0.union(path1))
-        jaccard_similarity = intersection / union
-        return 1.0 - jaccard_similarity
-
-    image_width = image_height = 336
-
-    train_dataset, test_dataset = TaskDatasetGenerator(
-        task=Maze(
-            width=13,
-            height=13,
-            seed=1,
-            valid_starts=(1, 1),
-            valid_ends=(11, 11),
-            generate_intermediate_states=generate_intermediate_states,
-        ),
-        dist_fn=path_distance,
-        extend_dataset=extend_dataset,
-    ).generate(n_train=n_train, n_test=n_test, distance_threshold=0.5)
-
-    out_dir = Path(out_dir)
-    out_dir = out_dir / "maze_small"
-    shutil.rmtree(out_dir, ignore_errors=True)
-
-    TaskProblemSet(task_problems=train_dataset).save(
-        out_dir / "train",
-        MazeBaseStyle,
-        subset_sizes=subset_sizes,
-        image_width=image_width,
-        image_height=image_height,
-    )
-    TaskProblemSet(task_problems=test_dataset).save(
-        out_dir / "test",
-        MazeBaseStyle,
-        image_width=image_width,
-        image_height=image_height,
-    )
+def generate_small_maze_dataset(**kwargs):
+    SmallMazeDatasetGenerator(**kwargs).generate()

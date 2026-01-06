@@ -1,5 +1,6 @@
 import json
 from collections import defaultdict
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Optional
 
@@ -15,26 +16,27 @@ from visual_intelligence.typing_and_extensions import (
 )
 
 
+@dataclass
+class VideoConfig:
+    """Configuration for video generation."""
+
+    enabled: bool = True
+    fps: int = 3
+    frames_per_init: int = 1
+    frames_per_intermediate: int = 1
+    frames_per_target: int = 1
+
+
 class TaskProblemSet:
     problems_dir_name: Path = Path("problem")
     init_grid_dir_name: Path = Path("init_image")
     tgt_grid_dir_name: Path = Path("tgt_image")
-    intermediate_grids_dir_name: Path = Path("video")
+    video_dir_name: Path = Path("video")
 
     def __init__(
         self,
         task_problems: list[TaskProblem],
     ):
-        tasks_with_intermediate_grids = sum(
-            [
-                task_problem.intermediate_grids is not None
-                for task_problem in task_problems
-            ]
-        )
-        if tasks_with_intermediate_grids not in {0, len(task_problems)}:
-            raise ValueError(
-                f"Either all tasks include intermediate grids or none of them does for {type(self).__name__}"
-            )
         self.task_problems = task_problems
 
     def save(
@@ -44,10 +46,8 @@ class TaskProblemSet:
         image_height: Literal["auto", "auto-per-problem"] | int = "auto",
         image_width: Literal["auto", "auto-per-problem"] | int = "auto",
         subset_sizes: Optional[list[int]] = None,
+        video_config: Optional[VideoConfig] = None,
     ) -> None:
-        ###
-        # Generetate dir structure
-        ###
         path_dir = Path(path_dir)
         path_dir.mkdir(parents=True, exist_ok=False)
 
@@ -60,7 +60,7 @@ class TaskProblemSet:
         tgt_grid_dir = path_dir / self.tgt_grid_dir_name
         tgt_grid_dir.mkdir()
 
-        intermediate_grids_dir = path_dir / self.intermediate_grids_dir_name
+        video_dir = path_dir / self.video_dir_name
 
         if image_height == "auto" or image_width == "auto":
             max_image_height, max_image_width = 0, 0
@@ -74,11 +74,10 @@ class TaskProblemSet:
                 image_height = max_image_height
             if image_width == "auto":
                 image_width = max_image_width
-        ###
-        # Save files into dir structure
-        ###
+
         leading_zeros_width = len(str(len(self.task_problems) - 1))
         data_config = defaultdict(list)
+
         for i_problem, task_problem in enumerate(self.task_problems):
             problem_name = f"{i_problem:0{leading_zeros_width}d}"
 
@@ -96,13 +95,13 @@ class TaskProblemSet:
                 task_problem.init_grid,
                 render_style,
                 image_height=task_problem_image_height,
-                image_width=task_problem_image_width,  # type: ignore
+                image_width=task_problem_image_width,
             )
             tgt_grid_image, tgt_grid_render_metadata = render(
                 task_problem.tgt_grid,
                 render_style,
                 image_height=task_problem_image_height,
-                image_width=task_problem_image_width,  # type: ignore
+                image_width=task_problem_image_width,
             )
 
             init_grid_image.save(init_grid_dir / (problem_name + IMAGE_EXTENSION))
@@ -114,38 +113,42 @@ class TaskProblemSet:
             data_config["rel_image_1_paths"].append(
                 str(self.tgt_grid_dir_name / (problem_name + IMAGE_EXTENSION))
             )
-            if task_problem.intermediate_grids is not None:
-                intermediate_grids_dir.mkdir(exist_ok=True)
-                interpolation_video = [init_grid_image]
-                intermediate_grids_render_metadata = []
-                for grid in task_problem.intermediate_grids:
-                    intermediate_grid_image, intermediate_grid_render_metadata = render(
-                        grid,
-                        render_style,
-                        image_height=task_problem_image_height,
-                        image_width=task_problem_image_width,  # type: ignore
-                    )
-                    interpolation_video += [intermediate_grid_image]
-                    intermediate_grids_render_metadata += [
-                        intermediate_grid_render_metadata
-                    ]
-                interpolation_video += [tgt_grid_image]
+
+            intermediate_grids_render_metadata = None
+            should_generate_video = (
+                video_config is not None and video_config.enabled
+            )
+
+            if should_generate_video:
+                video_dir.mkdir(exist_ok=True)
+                video_frames = [init_grid_image] * video_config.frames_per_init
+
+                if (
+                    task_problem.intermediate_grids is not None
+                    and video_config.frames_per_intermediate > 0
+                ):
+                    intermediate_grids_render_metadata = []
+                    for grid in task_problem.intermediate_grids:
+                        intermediate_image, intermediate_metadata = render(
+                            grid,
+                            render_style,
+                            image_height=task_problem_image_height,
+                            image_width=task_problem_image_width,
+                        )
+                        video_frames += [intermediate_image] * video_config.frames_per_intermediate
+                        intermediate_grids_render_metadata.append(intermediate_metadata)
+
+                video_frames += [tgt_grid_image] * video_config.frames_per_target
 
                 export_to_video(
-                    interpolation_video,
-                    output_video_path=intermediate_grids_dir
-                    / (problem_name + VIDEO_EXTENSION),
-                    fps=3,
+                    video_frames,
+                    output_video_path=video_dir / (problem_name + VIDEO_EXTENSION),
+                    fps=video_config.fps,
                 )
 
                 data_config["rel_video_paths"].append(
-                    str(
-                        self.intermediate_grids_dir_name
-                        / (problem_name + VIDEO_EXTENSION)
-                    )
+                    str(self.video_dir_name / (problem_name + VIDEO_EXTENSION))
                 )
-            else:
-                intermediate_grids_render_metadata = None
 
             RenderedTaskProblem(
                 task_problem=task_problem,
@@ -158,7 +161,7 @@ class TaskProblemSet:
             data_config["rel_metadata_paths"].append(
                 str(self.problems_dir_name / (problem_name + PROBLEM_EXTENSION))
             )
-        # Save dataset configurations files based on subset_size
+
         if subset_sizes is not None:
             for subset_size in subset_sizes:
                 filename = path_dir / f"data_group_n{subset_size}.json"

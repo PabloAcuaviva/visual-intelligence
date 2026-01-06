@@ -1,59 +1,39 @@
-import shutil
-from pathlib import Path
-from typing import Optional, Union
+from dataclasses import dataclass
 
-import numpy as np
-
-from visual_intelligence.tasks.base import TaskDatasetGenerator, TaskProblem
 from visual_intelligence.tasks.hitori import Hitori
-from visual_intelligence.tasks.problem_set import TaskProblemSet
 from visual_intelligence.tasks.render.schemas import ArcBaseStyle
 
+from .base import BaseDatasetGenerator
 from .registry import register_dataset
 
 
+@dataclass(kw_only=True)
+class HitoriDatasetGenerator(BaseDatasetGenerator):
+    """Hitori puzzle dataset generator."""
+
+    # Task-specific params
+    size: int = 5
+    difficulty: str = "easy"
+
+    def create_task(self) -> Hitori:
+        # Auto-calculate image size if not specified
+        if self.image_width is None or self.image_height is None:
+            orig_size = (
+                ArcBaseStyle.cell_size + ArcBaseStyle.grid_border_size
+            ) * self.size + ArcBaseStyle.grid_border_size
+            calculated_size = 16 * (orig_size // 16 + (orig_size % 16 != 0))
+            if self.image_width is None:
+                self.image_width = calculated_size
+            if self.image_height is None:
+                self.image_height = calculated_size
+
+        return Hitori(size=self.size, difficulty=self.difficulty, seed=123)
+
+    @property
+    def dataset_name(self) -> str:
+        return f"hitori_{self.size}_{self.difficulty}"
+
+
 @register_dataset("hitori")
-def generate_hitori_dataset(
-    size: int = 5,
-    difficulty: str = "easy",
-    subset_sizes: Optional[list[int]] = None,
-    n_train: int = 100,
-    n_test: int = 200,
-    extend_dataset: Optional[Path] = None,
-    out_dir: Union[str, Path] = "datasets",
-):
-    def hitori_distance(tp0: TaskProblem, tp1: TaskProblem) -> float:
-        g0 = np.array(tp0.init_grid)
-        g1 = np.array(tp1.init_grid)
-        return np.sum(g0 != g1) / g0.size
-
-    hitori_train, hitori_test = TaskDatasetGenerator(
-        task=Hitori(size=size, difficulty=difficulty, seed=123),
-        dist_fn=hitori_distance,
-        extend_dataset=extend_dataset,
-    ).generate(n_train=n_train, n_test=n_test, distance_threshold=0.3)
-
-    style = ArcBaseStyle
-    orig_size = (
-        style.cell_size + style.grid_border_size
-    ) * size + style.grid_border_size
-
-    image_width = image_height = 16 * (orig_size // 16 + (orig_size % 16 != 0))
-
-    out_dir = Path(out_dir)
-    out_dir = out_dir / f"hitori_{size}_{difficulty}"
-    shutil.rmtree(out_dir, ignore_errors=True)
-
-    TaskProblemSet(task_problems=hitori_train).save(
-        out_dir / "train",
-        style,
-        subset_sizes=subset_sizes,
-        image_width=image_width,
-        image_height=image_height,
-    )
-    TaskProblemSet(task_problems=hitori_test).save(
-        out_dir / "test",
-        style,
-        image_width=image_width,
-        image_height=image_height,
-    )
+def generate_hitori_dataset(**kwargs):
+    HitoriDatasetGenerator(**kwargs).generate()
