@@ -1464,6 +1464,122 @@ function executeReplaceColor() {
 }
 
 // ===========================================
+// Rotation
+// ===========================================
+
+function rotateSelection(degrees) {
+    if (!CURRENT_GRID) {
+        errorMsg('No grid loaded');
+        return;
+    }
+    
+    if (isCurrentStepLocked()) {
+        errorMsg('This step is locked. Click "Unlock" to edit.');
+        return;
+    }
+    
+    let selected = $('#editor_grid').find('.ui-selected');
+    if (selected.length === 0) {
+        errorMsg('Select cells first (use Select tool)');
+        return;
+    }
+    
+    // Get bounds of selection
+    let minRow = Infinity, maxRow = -Infinity;
+    let minCol = Infinity, maxCol = -Infinity;
+    
+    selected.each(function() {
+        let row = parseInt($(this).attr('x'));
+        let col = parseInt($(this).attr('y'));
+        minRow = Math.min(minRow, row);
+        maxRow = Math.max(maxRow, row);
+        minCol = Math.min(minCol, col);
+        maxCol = Math.max(maxCol, col);
+    });
+    
+    let height = maxRow - minRow + 1;
+    let width = maxCol - minCol + 1;
+    
+    // Check if selection is rectangular (all cells in bounds are selected)
+    if (selected.length !== height * width) {
+        errorMsg('Selection must be rectangular for rotation');
+        return;
+    }
+    
+    saveUndoState();
+    
+    // Extract the selected region
+    let region = [];
+    for (let i = 0; i < height; i++) {
+        region[i] = [];
+        for (let j = 0; j < width; j++) {
+            region[i][j] = CURRENT_GRID.grid[minRow + i][minCol + j];
+        }
+    }
+    
+    // Rotate the region
+    let rotated;
+    if (degrees === 90) {
+        // Clockwise: new[j][height-1-i] = old[i][j]
+        rotated = [];
+        for (let j = 0; j < width; j++) {
+            rotated[j] = [];
+            for (let i = height - 1; i >= 0; i--) {
+                rotated[j][height - 1 - i] = region[i][j];
+            }
+        }
+    } else {
+        // Counter-clockwise (-90): new[width-1-j][i] = old[i][j]
+        rotated = [];
+        for (let j = width - 1; j >= 0; j--) {
+            rotated[width - 1 - j] = [];
+            for (let i = 0; i < height; i++) {
+                rotated[width - 1 - j][i] = region[i][j];
+            }
+        }
+    }
+    
+    // Check if rotated region fits
+    let newHeight = rotated.length;
+    let newWidth = rotated[0].length;
+    
+    if (minRow + newHeight > CURRENT_GRID.height || minCol + newWidth > CURRENT_GRID.width) {
+        errorMsg('Rotated selection would exceed grid bounds');
+        undo(); // Revert the saved state
+        return;
+    }
+    
+    // Clear the original region (fill with 0)
+    for (let i = 0; i < height; i++) {
+        for (let j = 0; j < width; j++) {
+            CURRENT_GRID.grid[minRow + i][minCol + j] = 0;
+        }
+    }
+    
+    // Place the rotated region
+    for (let i = 0; i < newHeight; i++) {
+        for (let j = 0; j < newWidth; j++) {
+            CURRENT_GRID.grid[minRow + i][minCol + j] = rotated[i][j];
+        }
+    }
+    
+    refreshEditorGrid();
+    syncFromEditorToData();
+    
+    // Re-select the rotated area
+    setTimeout(() => {
+        $('.cell').removeClass('ui-selected');
+        for (let i = 0; i < newHeight; i++) {
+            for (let j = 0; j < newWidth; j++) {
+                $(`.cell[x="${minRow + i}"][y="${minCol + j}"]`).addClass('ui-selected');
+            }
+        }
+    }, 50);
+    
+    infoMsg(`Rotated selection ${degrees > 0 ? '+' : ''}${degrees}°`);
+}
+
+// ===========================================
 // Pair Preview Modal (Fullscreen)
 // ===========================================
 
