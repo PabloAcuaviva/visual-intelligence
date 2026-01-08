@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>ARC Intermediate States Editor</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/app.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="css/common.css">
+    <link rel="stylesheet" type="text/css" href="css/app.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="img/favicon.png">
+</head>
+<body>
+    <div id="app-container">
+        <!-- HEADER -->
+        <header id="header">
+            <div class="header-left">
+                <h1>⚡ ARC Intermediate States Editor</h1>
+            </div>
+            <div class="header-center">
+                <div class="folder-controls">
+                    <div class="control-group">
+                        <label>Load Folder:</label>
+                        <input type="file" id="load_folder_input" webkitdirectory directory multiple style="display: none;"/>
+                        <button onclick="document.getElementById('load_folder_input').click();" class="btn btn-primary">
+                            📂 Browse Folder
+                        </button>
+                    </div>
+                    <div class="control-group">
+                        <label>Save to:</label>
+                        <input type="text" id="save_folder_path" placeholder="(no folder selected)" class="folder-input" readonly>
+                        <button onclick="pickSaveFolder()" class="btn btn-secondary">📁 Pick Folder</button>
+                        <button onclick="saveCurrentTask()" class="btn btn-success">💾 Save</button>
+                    </div>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="control-group">
+                    <label>Intermediate Steps:</label>
+                    <input type="number" id="num_steps" value="8" min="1" max="50" class="steps-input">
+                    <button onclick="applyStepCount()" class="btn btn-secondary">Apply</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- TASK NAVIGATION -->
+        <div id="task-nav">
+            <button onclick="prevTask()" class="btn btn-nav" id="prev_task_btn" disabled>◀ Previous Task</button>
+            <div class="task-info">
+                <span id="task_name">No task loaded</span>
+                <span id="task_counter" class="task-counter"></span>
+            </div>
+            <button onclick="nextTask()" class="btn btn-nav" id="next_task_btn" disabled>Next Task ▶</button>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div id="main-content">
+            <!-- LEFT: PAIR SELECTOR -->
+            <div id="pair-panel">
+                <div class="panel-header">
+                    <h2>📋 Task Pairs</h2>
+                </div>
+                <div id="train-pairs-section">
+                    <h3>Train Pairs</h3>
+                    <div id="train_pairs_list" class="pairs-list"></div>
+                </div>
+                <div id="test-pairs-section">
+                    <h3>Test Pairs</h3>
+                    <div id="test_pairs_list" class="pairs-list"></div>
+                </div>
+            </div>
+
+            <!-- CENTER: EDITOR -->
+            <div id="editor-panel">
+                <div class="panel-header editor-header">
+                    <div class="header-left-section">
+                        <h2>🎨 Grid Editor</h2>
+                        <div class="editor-info">
+                            <span id="editing_status">Select a step from timeline</span>
+                        </div>
+                    </div>
+                    <div class="header-right-section">
+                        <span class="section-label">Timeline:</span>
+                        <div class="timeline-quick-controls">
+                            <button onclick="addStepBefore()" class="btn btn-sm" title="Insert new step before current">+ Prev</button>
+                            <button onclick="copyFromPrevious()" class="btn btn-sm" title="Copy from previous step">📋 Prev</button>
+                            <button onclick="prevStep()" class="btn btn-sm btn-nav-inline" title="Previous step (←)">◀</button>
+                            <button onclick="nextStep()" class="btn btn-sm btn-nav-inline" title="Next step (→)">▶</button>
+                            <button onclick="copyForward()" class="btn btn-sm btn-accent" title="Copy current step to next step">📋 Next</button>
+                            <button onclick="addStepAfter()" class="btn btn-sm" title="Insert new step after current">+ Next</button>
+                            <span class="controls-divider"></span>
+                            <button onclick="deleteCurrentStep()" class="btn btn-sm btn-danger" id="delete_step_btn2" title="Delete selected step">🗑️</button>
+                            <button onclick="resetCurrentGrid()" class="btn btn-sm" title="Reset grid to empty">🔄</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="editor-grid-wrapper">
+                    <div id="editor_grid" class="edition_grid selectable_grid">
+                        <div class="editor_placeholder">
+                            Load a task folder and select a pair to begin editing.
+                        </div>
+                    </div>
+                </div>
+
+                <div id="editor-controls">
+                    <div class="controls-row">
+                        <div class="control-group">
+                            <label>Grid Size:</label>
+                            <input type="text" id="grid_size_display" class="grid-size-display" readonly>
+                        </div>
+                        <div class="tool-buttons">
+                            <button onclick="undo()" class="btn btn-tool" id="undo_btn" title="Undo (Ctrl+Z)" disabled>
+                                ↩️ Undo
+                            </button>
+                            <button onclick="redo()" class="btn btn-tool" id="redo_btn" title="Redo (Ctrl+Y)" disabled>
+                                ↪️ Redo
+                            </button>
+                            <button onclick="toggleLock()" class="btn btn-tool" id="lock_btn" title="Unlock input/output editing">
+                                🔒 Locked
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="controls-row">
+                        <div id="toolbar">
+                            <label>Tools:</label>
+                            <div class="tool-options">
+                                <input type="radio" id="tool_edit" name="tool_switching" value="edit" checked>
+                                <label for="tool_edit" class="tool-label">✏️ Edit</label>
+
+                                <input type="radio" id="tool_draw" name="tool_switching" value="draw">
+                                <label for="tool_draw" class="tool-label">🖌️ Draw</label>
+
+                                <input type="radio" id="tool_select" name="tool_switching" value="select">
+                                <label for="tool_select" class="tool-label">⬚ Select</label>
+
+                                <input type="radio" id="tool_floodfill" name="tool_switching" value="floodfill">
+                                <label for="tool_floodfill" class="tool-label">🪣 Fill</label>
+
+                                <input type="radio" id="tool_line" name="tool_switching" value="line">
+                                <label for="tool_line" class="tool-label">📏 Line</label>
+                            </div>
+                            <div class="tool-actions">
+                                <button onclick="showReplaceColorDialog()" class="btn btn-tool" title="Replace color (in selection or entire grid)">
+                                    🔄 Replace
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="controls-row">
+                        <div id="symbol_picker">
+                            <label>Colors:</label>
+                            <div class="symbol-options">
+                                <div class="symbol_preview symbol_0 selected-symbol-preview" symbol="0" title="0 - Black"></div>
+                                <div class="symbol_preview symbol_1" symbol="1" title="1 - Blue"></div>
+                                <div class="symbol_preview symbol_2" symbol="2" title="2 - Red"></div>
+                                <div class="symbol_preview symbol_3" symbol="3" title="3 - Green"></div>
+                                <div class="symbol_preview symbol_4" symbol="4" title="4 - Yellow"></div>
+                                <div class="symbol_preview symbol_5" symbol="5" title="5 - Grey"></div>
+                                <div class="symbol_preview symbol_6" symbol="6" title="6 - Fuchsia"></div>
+                                <div class="symbol_preview symbol_7" symbol="7" title="7 - Orange"></div>
+                                <div class="symbol_preview symbol_8" symbol="8" title="8 - Teal"></div>
+                                <div class="symbol_preview symbol_9" symbol="9" title="9 - Brown"></div>
+                                <div class="symbol_preview symbol_n1" symbol="-1" title="-1 - Padding (expanded area)"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="message-area">
+                    <div id="error_display"></div>
+                    <div id="info_display"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TIMELINE -->
+        <div id="timeline-panel">
+            <div class="panel-header">
+                <h2>⏱️ Timeline</h2>
+            </div>
+            <div id="timeline-container">
+                <div id="timeline" class="timeline">
+                    <div class="timeline-placeholder">
+                        Select a pair from the left panel to view its timeline.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keyboard shortcuts help (hidden by default) -->
+    <div id="shortcuts-help" class="shortcuts-panel" style="display: none;">
+        <h3>⌨️ Keyboard Shortcuts</h3>
+        <ul>
+            <li><kbd>←</kbd> / <kbd>→</kbd> - Navigate steps (or pairs/steps in preview)</li>
+            <li><kbd>Ctrl+Z</kbd> / <kbd>Cmd+Z</kbd> - Undo</li>
+            <li><kbd>Ctrl+Y</kbd> / <kbd>Cmd+Shift+Z</kbd> - Redo</li>
+            <li><kbd>Ctrl+S</kbd> / <kbd>Cmd+S</kbd> - Save task</li>
+            <li><kbd>C</kbd> or <kbd>Ctrl+C</kbd> - Copy selected cells</li>
+            <li><kbd>V</kbd> or <kbd>Ctrl+V</kbd> - Paste to selected cell</li>
+            <li><kbd>D</kbd> - Copy current step forward</li>
+            <li><kbd>0-9</kbd> - Quick color select</li>
+            <li><kbd>Esc</kbd> - Close modals / Cancel line</li>
+            <li><kbd>?</kbd> - Toggle this help</li>
+        </ul>
+        <p style="font-size: 0.8em; color: #718096; margin-top: 10px;">
+            <strong>Tip:</strong> Click 🔍 on pairs or timeline steps to view them larger. Use ← → to navigate in preview mode.
+        </p>
+    </div>
+
+    <!-- Pair Preview Modal (Fullscreen) -->
+    <div id="pair_preview_modal" class="modal-overlay fullscreen-modal" style="display: none;">
+        <div class="modal-content pair-preview-content">
+            <div class="modal-header">
+                <button onclick="prevPairPreview()" class="modal-nav-btn" id="prev_pair_btn" title="Previous pair (←)">◀</button>
+                <h3 id="pair_preview_title">🔍 Task Preview</h3>
+                <button onclick="nextPairPreview()" class="modal-nav-btn" id="next_pair_btn" title="Next pair (→)">▶</button>
+                <button onclick="closePairPreview()" class="modal-close-btn" title="Close (ESC)">✕</button>
+            </div>
+            <div class="pair-preview-grids">
+                <div class="preview-grid-section">
+                    <h4>Input</h4>
+                    <div id="preview_input_grid" class="preview-grid-container"></div>
+                    <span id="preview_input_size" class="preview-size-label"></span>
+                </div>
+                <div class="preview-arrow">→</div>
+                <div class="preview-grid-section">
+                    <h4>Output</h4>
+                    <div id="preview_output_grid" class="preview-grid-container"></div>
+                    <span id="preview_output_size" class="preview-size-label"></span>
+                </div>
+            </div>
+            <div class="preview-nav-hint">
+                <button onclick="prevPairPreview()" class="btn btn-nav-sm" id="prev_pair_btn2">◀ Previous</button>
+                <span id="pair_preview_counter">1 / 1</span>
+                <button onclick="nextPairPreview()" class="btn btn-nav-sm" id="next_pair_btn2">Next ▶</button>
+            </div>
+            <p class="preview-hint">Use <kbd>←</kbd> <kbd>→</kbd> to navigate · <kbd>ESC</kbd> to close</p>
+        </div>
+    </div>
+
+    <!-- Timeline Preview Modal (Fullscreen) - Shows ENTIRE timeline for a pair -->
+    <div id="timeline_preview_modal" class="modal-overlay fullscreen-modal" style="display: none;">
+        <div class="modal-content timeline-preview-content">
+            <div class="modal-header">
+                <button onclick="prevTimelinePreview()" class="modal-nav-btn" id="prev_timeline_btn" title="Previous example (←)">◀</button>
+                <h3 id="timeline_preview_title">🔍 Timeline Preview</h3>
+                <button onclick="nextTimelinePreview()" class="modal-nav-btn" id="next_timeline_btn" title="Next example (→)">▶</button>
+                <button onclick="closeTimelinePreview()" class="modal-close-btn" title="Close (ESC)">✕</button>
+            </div>
+            <div id="timeline_preview_container" class="timeline-preview-full">
+                <!-- All steps will be rendered here -->
+            </div>
+            <div class="preview-nav-hint">
+                <button onclick="prevTimelinePreview()" class="btn btn-nav-sm" id="prev_timeline_btn2">◀ Previous Example</button>
+                <span id="timeline_preview_counter">Train 1 / 5</span>
+                <button onclick="nextTimelinePreview()" class="btn btn-nav-sm" id="next_timeline_btn2">Next Example ▶</button>
+            </div>
+            <p class="preview-hint">Use <kbd>←</kbd> <kbd>→</kbd> to switch examples · <kbd>ESC</kbd> to close</p>
+        </div>
+    </div>
+
+    <!-- Replace Color Modal -->
+    <div id="replace_color_modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h3>🔄 Replace Color</h3>
+            <div class="modal-form">
+                <div class="form-group">
+                    <label for="replace_from_color">From color:</label>
+                    <select id="replace_from_color" class="color-select">
+                        <option value="-1">-1 (Padding)</option>
+                        <option value="0">0 (Black)</option>
+                        <option value="1">1 (Blue)</option>
+                        <option value="2">2 (Red)</option>
+                        <option value="3">3 (Green)</option>
+                        <option value="4">4 (Yellow)</option>
+                        <option value="5">5 (Grey)</option>
+                        <option value="6">6 (Fuchsia)</option>
+                        <option value="7">7 (Orange)</option>
+                        <option value="8">8 (Teal)</option>
+                        <option value="9">9 (Brown)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="replace_to_color">To color:</label>
+                    <select id="replace_to_color" class="color-select">
+                        <option value="-1">-1 (Padding)</option>
+                        <option value="0">0 (Black)</option>
+                        <option value="1">1 (Blue)</option>
+                        <option value="2">2 (Red)</option>
+                        <option value="3">3 (Green)</option>
+                        <option value="4">4 (Yellow)</option>
+                        <option value="5">5 (Grey)</option>
+                        <option value="6">6 (Fuchsia)</option>
+                        <option value="7">7 (Orange)</option>
+                        <option value="8">8 (Teal)</option>
+                        <option value="9">9 (Brown)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button onclick="hideReplaceColorDialog()" class="btn btn-secondary">Cancel</button>
+                <button onclick="executeReplaceColor()" class="btn btn-primary">Replace All</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
