@@ -173,6 +173,7 @@ class BaseDatasetGenerator(ABC):
     distance_threshold: float = 0.3
     attempts_multiplier: int = 20
     video: Optional[VideoConfig] = None
+    max_workers: Optional[int] = None
 
     @abstractmethod
     def create_task(self) -> Task:
@@ -209,6 +210,8 @@ class BaseDatasetGenerator(ABC):
             save_kwargs["image_height"] = self.image_height
         if self.video is not None:
             save_kwargs["video_config"] = self.video
+        if self.max_workers is not None:
+            save_kwargs["max_workers"] = self.max_workers
 
         out_dir = Path(self.out_dir) / self.dataset_name
         shutil.rmtree(out_dir, ignore_errors=True)

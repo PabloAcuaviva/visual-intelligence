@@ -64,7 +64,7 @@ if __name__ == "__main__":
         "PseudoLife": "B357/S238",
         "LongLife": "B345/S5",
         "LowDeath": "B368/S238",
-        "3-4 Life": "B34/S34",
+        "3_4_Life": "B34/S34",
         # --- Spaceships & Movement ---
         "Morley": "B368/S245",
         "2x2": "B36/S125",
@@ -207,10 +207,10 @@ if __name__ == "__main__":
         birth_count = random.choice(birth_counts)
         survival_count = random.choice(survival_counts)
 
-        # Randomly select which digits to include (from 0-8)
-        birth_rule = sorted(random.sample(range(9), birth_count))
+        # Randomly select which digits to include (from 1-8)
+        birth_rule = sorted(random.sample(range(1, 9), birth_count))
         survival_rule = (
-            sorted(random.sample(range(9), survival_count))
+            sorted(random.sample(range(1, 9), survival_count))
             if survival_count > 0
             else []
         )
@@ -232,7 +232,7 @@ if __name__ == "__main__":
         # Create name in B*/S* format
         birth_str = "".join(map(str, birth_rule))
         survival_str = "".join(map(str, survival_rule))
-        variant_name = f"B{birth_str}/S{survival_str}"
+        variant_name = f"B{birth_str}_S{survival_str}"
 
         random_gol_rules[variant_name] = {
             "birth_rule": birth_rule,

@@ -1,5 +1,6 @@
 import json
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Optional
@@ -39,6 +40,122 @@ class TaskProblemSet:
     ):
         self.task_problems = task_problems
 
+    def _process_single_problem(
+        self,
+        args: tuple[
+            int,  # i_problem
+            TaskProblem,
+            str,  # problem_name
+            RenderStyle,
+            int | str,  # image_height
+            int | str,  # image_width
+            Path,  # init_grid_dir
+            Path,  # tgt_grid_dir
+            Path,  # problems_dir
+            Path,  # video_dir
+            Optional[VideoConfig],
+        ],
+    ) -> dict:
+        """Process a single problem: render, save images/video, return paths."""
+        (
+            i_problem,
+            task_problem,
+            problem_name,
+            render_style,
+            image_height,
+            image_width,
+            init_grid_dir,
+            tgt_grid_dir,
+            problems_dir,
+            video_dir,
+            video_config,
+        ) = args
+
+        _image_height, _image_width = get_auto_image_dim(task_problem, render_style)
+        if image_height == "auto-per-problem":
+            task_problem_image_height = _image_height
+        else:
+            task_problem_image_height = image_height
+        if image_width == "auto-per-problem":
+            task_problem_image_width = _image_width
+        else:
+            task_problem_image_width = image_width
+
+        init_grid_image, init_grid_render_metadata = render(
+            task_problem.init_grid,
+            render_style,
+            image_height=task_problem_image_height,
+            image_width=task_problem_image_width,
+        )
+        tgt_grid_image, tgt_grid_render_metadata = render(
+            task_problem.tgt_grid,
+            render_style,
+            image_height=task_problem_image_height,
+            image_width=task_problem_image_width,
+        )
+
+        init_grid_image.save(init_grid_dir / (problem_name + IMAGE_EXTENSION))
+        tgt_grid_image.save(tgt_grid_dir / (problem_name + IMAGE_EXTENSION))
+
+        result = {
+            "i_problem": i_problem,
+            "rel_image_0_path": str(
+                self.init_grid_dir_name / (problem_name + IMAGE_EXTENSION)
+            ),
+            "rel_image_1_path": str(
+                self.tgt_grid_dir_name / (problem_name + IMAGE_EXTENSION)
+            ),
+            "rel_metadata_path": str(
+                self.problems_dir_name / (problem_name + PROBLEM_EXTENSION)
+            ),
+            "rel_video_path": None,
+        }
+
+        intermediate_grids_render_metadata = None
+        should_generate_video = video_config is not None and video_config.enabled
+
+        if should_generate_video:
+            video_frames = [init_grid_image] * video_config.frames_per_init
+
+            if (
+                task_problem.intermediate_grids is not None
+                and video_config.frames_per_intermediate > 0
+            ):
+                intermediate_grids_render_metadata = []
+                for grid in task_problem.intermediate_grids:
+                    intermediate_image, intermediate_metadata = render(
+                        grid,
+                        render_style,
+                        image_height=task_problem_image_height,
+                        image_width=task_problem_image_width,
+                    )
+                    video_frames += [
+                        intermediate_image
+                    ] * video_config.frames_per_intermediate
+                    intermediate_grids_render_metadata.append(intermediate_metadata)
+
+            video_frames += [tgt_grid_image] * video_config.frames_per_target
+
+            export_to_video(
+                video_frames,
+                output_video_path=video_dir / (problem_name + VIDEO_EXTENSION),
+                fps=video_config.fps,
+            )
+
+            result["rel_video_path"] = str(
+                self.video_dir_name / (problem_name + VIDEO_EXTENSION)
+            )
+
+        RenderedTaskProblem(
+            task_problem=task_problem,
+            render_style=render_style,
+            init_grid_render_metadata=init_grid_render_metadata,
+            tgt_grid_render_metadata=tgt_grid_render_metadata,
+            intermediate_grids_render_metadata=intermediate_grids_render_metadata,
+        ).save(problems_dir / (problem_name + PROBLEM_EXTENSION))
+
+        return result
+
     def save(
         self,
         path_dir: Path | str,
@@ -47,6 +164,7 @@ class TaskProblemSet:
         image_width: Literal["auto", "auto-per-problem"] | int = "auto",
         subset_sizes: Optional[list[int]] = None,
         video_config: Optional[VideoConfig] = None,
+        max_workers: Optional[int] = None,
     ) -> None:
         path_dir = Path(path_dir)
         path_dir.mkdir(parents=True, exist_ok=False)
@@ -61,6 +179,8 @@ class TaskProblemSet:
         tgt_grid_dir.mkdir()
 
         video_dir = path_dir / self.video_dir_name
+        if video_config is not None and video_config.enabled:
+            video_dir.mkdir(exist_ok=True)
 
         if image_height == "auto" or image_width == "auto":
             max_image_height, max_image_width = 0, 0
@@ -76,91 +196,40 @@ class TaskProblemSet:
                 image_width = max_image_width
 
         leading_zeros_width = len(str(len(self.task_problems) - 1))
+
+        # Prepare arguments for parallel processing
+        process_args = [
+            (
+                i_problem,
+                task_problem,
+                f"{i_problem:0{leading_zeros_width}d}",
+                render_style,
+                image_height,
+                image_width,
+                init_grid_dir,
+                tgt_grid_dir,
+                problems_dir,
+                video_dir,
+                video_config,
+            )
+            for i_problem, task_problem in enumerate(self.task_problems)
+        ]
+
+        # Process problems in parallel
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            results = list(executor.map(self._process_single_problem, process_args))
+
+        # Sort results by problem index to maintain order
+        results.sort(key=lambda x: x["i_problem"])
+
+        # Build data_config from results
         data_config = defaultdict(list)
-
-        for i_problem, task_problem in enumerate(self.task_problems):
-            problem_name = f"{i_problem:0{leading_zeros_width}d}"
-
-            _image_height, _image_width = get_auto_image_dim(task_problem, render_style)
-            if image_height == "auto-per-problem":
-                task_problem_image_height = _image_height
-            else:
-                task_problem_image_height = image_height
-            if _image_width == "auto-per-problem":
-                task_problem_image_width = _image_width
-            else:
-                task_problem_image_width = image_width
-
-            init_grid_image, init_grid_render_metadata = render(
-                task_problem.init_grid,
-                render_style,
-                image_height=task_problem_image_height,
-                image_width=task_problem_image_width,
-            )
-            tgt_grid_image, tgt_grid_render_metadata = render(
-                task_problem.tgt_grid,
-                render_style,
-                image_height=task_problem_image_height,
-                image_width=task_problem_image_width,
-            )
-
-            init_grid_image.save(init_grid_dir / (problem_name + IMAGE_EXTENSION))
-            tgt_grid_image.save(tgt_grid_dir / (problem_name + IMAGE_EXTENSION))
-
-            data_config["rel_image_0_paths"].append(
-                str(self.init_grid_dir_name / (problem_name + IMAGE_EXTENSION))
-            )
-            data_config["rel_image_1_paths"].append(
-                str(self.tgt_grid_dir_name / (problem_name + IMAGE_EXTENSION))
-            )
-
-            intermediate_grids_render_metadata = None
-            should_generate_video = (
-                video_config is not None and video_config.enabled
-            )
-
-            if should_generate_video:
-                video_dir.mkdir(exist_ok=True)
-                video_frames = [init_grid_image] * video_config.frames_per_init
-
-                if (
-                    task_problem.intermediate_grids is not None
-                    and video_config.frames_per_intermediate > 0
-                ):
-                    intermediate_grids_render_metadata = []
-                    for grid in task_problem.intermediate_grids:
-                        intermediate_image, intermediate_metadata = render(
-                            grid,
-                            render_style,
-                            image_height=task_problem_image_height,
-                            image_width=task_problem_image_width,
-                        )
-                        video_frames += [intermediate_image] * video_config.frames_per_intermediate
-                        intermediate_grids_render_metadata.append(intermediate_metadata)
-
-                video_frames += [tgt_grid_image] * video_config.frames_per_target
-
-                export_to_video(
-                    video_frames,
-                    output_video_path=video_dir / (problem_name + VIDEO_EXTENSION),
-                    fps=video_config.fps,
-                )
-
-                data_config["rel_video_paths"].append(
-                    str(self.video_dir_name / (problem_name + VIDEO_EXTENSION))
-                )
-
-            RenderedTaskProblem(
-                task_problem=task_problem,
-                render_style=render_style,
-                init_grid_render_metadata=init_grid_render_metadata,
-                tgt_grid_render_metadata=tgt_grid_render_metadata,
-                intermediate_grids_render_metadata=intermediate_grids_render_metadata,
-            ).save(problems_dir / (problem_name + PROBLEM_EXTENSION))
-
-            data_config["rel_metadata_paths"].append(
-                str(self.problems_dir_name / (problem_name + PROBLEM_EXTENSION))
-            )
+        for result in results:
+            data_config["rel_image_0_paths"].append(result["rel_image_0_path"])
+            data_config["rel_image_1_paths"].append(result["rel_image_1_path"])
+            data_config["rel_metadata_paths"].append(result["rel_metadata_path"])
+            if result["rel_video_path"] is not None:
+                data_config["rel_video_paths"].append(result["rel_video_path"])
 
         if subset_sizes is not None:
             for subset_size in subset_sizes:
