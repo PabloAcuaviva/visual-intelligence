@@ -1579,6 +1579,90 @@ function rotateSelection(degrees) {
     infoMsg(`Rotated selection ${degrees > 0 ? '+' : ''}${degrees}°`);
 }
 
+function flipSelection(direction) {
+    if (!CURRENT_GRID) {
+        errorMsg('No grid loaded');
+        return;
+    }
+    
+    if (isCurrentStepLocked()) {
+        errorMsg('This step is locked. Click "Unlock" to edit.');
+        return;
+    }
+    
+    let selected = $('#editor_grid').find('.ui-selected');
+    if (selected.length === 0) {
+        errorMsg('Select cells first (use Select tool)');
+        return;
+    }
+    
+    // Get bounds of selection
+    let minRow = Infinity, maxRow = -Infinity;
+    let minCol = Infinity, maxCol = -Infinity;
+    
+    selected.each(function() {
+        let row = parseInt($(this).attr('x'));
+        let col = parseInt($(this).attr('y'));
+        minRow = Math.min(minRow, row);
+        maxRow = Math.max(maxRow, row);
+        minCol = Math.min(minCol, col);
+        maxCol = Math.max(maxCol, col);
+    });
+    
+    let height = maxRow - minRow + 1;
+    let width = maxCol - minCol + 1;
+    
+    // Check if selection is rectangular
+    if (selected.length !== height * width) {
+        errorMsg('Selection must be rectangular for flip');
+        return;
+    }
+    
+    saveUndoState();
+    
+    // Extract the selected region
+    let region = [];
+    for (let i = 0; i < height; i++) {
+        region[i] = [];
+        for (let j = 0; j < width; j++) {
+            region[i][j] = CURRENT_GRID.grid[minRow + i][minCol + j];
+        }
+    }
+    
+    // Flip the region
+    if (direction === 'horizontal') {
+        // Flip left-right: reverse each row
+        for (let i = 0; i < height; i++) {
+            region[i].reverse();
+        }
+    } else {
+        // Flip top-bottom: reverse the rows
+        region.reverse();
+    }
+    
+    // Place the flipped region back
+    for (let i = 0; i < height; i++) {
+        for (let j = 0; j < width; j++) {
+            CURRENT_GRID.grid[minRow + i][minCol + j] = region[i][j];
+        }
+    }
+    
+    refreshEditorGrid();
+    syncFromEditorToData();
+    
+    // Re-select the area
+    setTimeout(() => {
+        $('.cell').removeClass('ui-selected');
+        for (let i = 0; i < height; i++) {
+            for (let j = 0; j < width; j++) {
+                $(`.cell[x="${minRow + i}"][y="${minCol + j}"]`).addClass('ui-selected');
+            }
+        }
+    }, 50);
+    
+    infoMsg(`Flipped selection ${direction === 'horizontal' ? 'horizontally ↔' : 'vertically ↕'}`);
+}
+
 // ===========================================
 // Pair Preview Modal (Fullscreen)
 // ===========================================
